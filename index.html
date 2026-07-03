@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<!-- "no-js" is removed by script.js; it keeps all content visible if JavaScript is unavailable -->
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ============================================================
+       SCROLL SMART — single-page static site
+       Files: index.html + styles.css + script.js (+ favicon.svg)
+
+       QUICK EDIT GUIDE — search for these markers:
+         [EDIT: PHOTO]        — Aiden's headshot (still a placeholder)
+         [EDIT: TESTIMONIAL]  — testimonial quotes (section hidden by default)
+         [EDIT: OG-IMAGE]     — social sharing preview image
+       ============================================================ -->
+
+  <title>Scroll Smart — Student-Led Online Safety &amp; Media Literacy Presentations</title>
+  <meta name="description" content="Scroll Smart is a student-led initiative teaching students to navigate social media safely, spot misinformation, and think critically online. Free presentations for schools." />
+
+  <!-- Open Graph (link previews in email/text/social) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Scroll Smart — Own Your Feed. Outsmart the Internet." />
+  <meta property="og:description" content="Free, student-led presentations on online safety and media literacy for schools." />
+  <!-- [EDIT: OG-IMAGE] Replace with a real 1200x630 image (e.g. assets/og-image.png)
+       and use an ABSOLUTE URL once the site is deployed, e.g.
+       https://yourdomain.org/assets/og-image.png -->
+  <meta property="og:image" content="assets/og-image.png" />
+  <meta property="og:site_name" content="Scroll Smart" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Scroll Smart — Own Your Feed. Outsmart the Internet." />
+  <meta name="twitter:description" content="Free, student-led presentations on online safety and media literacy for schools." />
+  <meta name="twitter:image" content="assets/og-image.png" /> <!-- [EDIT: OG-IMAGE] -->
+
+  <meta name="theme-color" content="#070b1a" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+  <!-- Fonts: Sora (headlines) + Inter (body). System fonts are the fallback,
+       so the site still looks right if these fail to load. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- Animated gradient background: fixed blobs that drift behind the glass panels.
+       Purely decorative — hidden from assistive tech. -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob blob-a"></div>
+    <div class="blob blob-b"></div>
+    <div class="blob blob-c"></div>
+    <div class="grain"></div>
+  </div>
+
+  <!-- Scroll progress bar (thin gradient line pinned to the top of the viewport) -->
+  <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+  <!-- ============ FLOATING GLASS NAV ============ -->
+  <header class="nav-wrap">
+    <nav class="nav glass" aria-label="Main navigation">
+      <a class="nav-brand" href="#home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4de8c2"/><stop offset="1" stop-color="#8b7bff"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="28" height="28" rx="9" fill="url(#bm)"/>
+          <path d="M21.5 11.2c-1-1.1-2.8-1.9-5-1.9-2.9 0-5 1.4-5 3.5 0 4.6 10 2.1 10 6.4 0 2.1-2.2 3.5-5.1 3.5-2.3 0-4.2-.8-5.3-2" fill="none" stroke="#081022" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+        <span>Scroll&nbsp;Smart</span>
+      </a>
+
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu">
+        <span></span><span></span>
+      </button>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#home" class="nav-link" data-nav>Home</a></li>
+        <li><a href="#mission" class="nav-link" data-nav>Mission</a></li>
+        <li><a href="#presentation" class="nav-link" data-nav>Presentation</a></li>
+        <li><a href="#why-us" class="nav-link" data-nav>Why Us</a></li>
+        <li><a href="#about" class="nav-link" data-nav>About</a></li>
+        <li><a href="#contact" class="nav-link" data-nav>Contact</a></li>
+        <!-- If you unhide the Testimonials section, you can add its nav link here:
+        <li><a href="#testimonials" class="nav-link" data-nav>Testimonials</a></li> -->
+      </ul>
+
+      <!-- Same pre-filled mailto used by every CTA on the page (goes to both founders) -->
+      <a class="btn btn-primary btn-nav" href="mailto:neil.gupta@scroll-smart.com,aiden.attarha@scroll-smart.com?subject=Presentation%20Request%20%E2%80%94%20%5BYour%20School%20Name%5D&body=Hi%20Scroll%20Smart%20team%2C%0A%0ASchool%20name%3A%20%0AContact%20person%20%26%20role%3A%20%0APreferred%20dates%2Ftimes%3A%20%0AGrade%20level(s)%20%26%20audience%20size%3A%20%0A%0AWe%27re%20interested%20in%20scheduling%20a%20Scroll%20Smart%20presentation%20at%20our%20school.%0A%0AThank%20you!">Book&nbsp;Us</a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ============ 1. HERO ============ -->
+    <section class="section hero" id="home">
+      <div class="container hero-inner">
+        <p class="eyebrow" data-reveal>
+          <span class="eyebrow-dot" aria-hidden="true"></span>
+          A student-led initiative
+        </p>
+
+        <h1 class="hero-title" data-reveal style="--d:.08s">
+          Own your feed.<br>
+          <span class="grad-text">Outsmart the internet.</span>
+        </h1>
+
+        <p class="hero-sub" data-reveal style="--d:.16s">
+          Scroll Smart teaches students to navigate social media safely, spot misinformation,
+          and think critically online — real strategies from fellow students,
+          not another lecture about logging off.
+        </p>
+
+        <div class="hero-cta" data-reveal style="--d:.24s">
+          <!-- Primary conversion CTA — pre-filled mailto to both founders -->
+          <a class="btn btn-primary btn-lg" href="mailto:neil.gupta@scroll-smart.com,aiden.attarha@scroll-smart.com?subject=Presentation%20Request%20%E2%80%94%20%5BYour%20School%20Name%5D&body=Hi%20Scroll%20Smart%20team%2C%0A%0ASchool%20name%3A%20%0AContact%20person%20%26%20role%3A%20%0APreferred%20dates%2Ftimes%3A%20%0AGrade%20level(s)%20%26%20audience%20size%3A%20%0A%0AWe%27re%20interested%20in%20scheduling%20a%20Scroll%20Smart%20presentation%20at%20our%20school.%0A%0AThank%20you!">
+            Request a Presentation
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 10h13m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="btn btn-ghost btn-lg" href="#mission">Explore our mission</a>
+        </div>
+
+        <!-- Floating topic chips — gentle bob animation, purely decorative accents -->
+        <ul class="hero-chips" data-reveal style="--d:.34s">
+          <li class="chip glass">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Privacy
+          </li>
+          <li class="chip glass" style="--bob:.6s">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Misinformation
+          </li>
+          <li class="chip glass" style="--bob:1.2s">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4a8 8 0 1 0 8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Balance
+          </li>
+          <li class="chip glass" style="--bob:1.8s">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 21h6m-5-3h4m-2-14a6 6 0 0 0-3.5 10.9c.9.7 1.5 1.3 1.5 2.1h4c0-.8.6-1.4 1.5-2.1A6 6 0 0 0 12 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Critical Thinking
+          </li>
+        </ul>
+      </div>
+
+      <a class="scroll-hint" href="#mission" aria-label="Scroll to Our Mission">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </section>
+
+    <!-- ============ 2. OUR MISSION ============ -->
+    <section class="section" id="mission">
+      <div class="container">
+        <p class="kicker" data-reveal>Our Mission</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          The internet isn't going anywhere.<br class="desk-only">
+          <span class="grad-text">Neither are we.</span>
+        </h2>
+        <p class="section-lead" data-reveal style="--d:.12s">
+          Students spend hours a day online — so telling them to simply use it less misses the point.
+          Scroll Smart exists to make every one of those hours safer and sharper: browsing securely,
+          protecting personal privacy, recognizing online dangers before they escalate, managing feeds
+          intentionally, and questioning what shows up on the screen instead of absorbing it.
+        </p>
+
+        <div class="card-grid four" data-reveal style="--d:.18s">
+          <article class="card glass">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Privacy</h3>
+            <p>What you share, who can see it, and how to lock down accounts before it matters.</p>
+          </article>
+
+          <article class="card glass">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Misinformation</h3>
+            <p>Fast, practical checks for spotting fake stories, doctored media, and misleading claims.</p>
+          </article>
+
+          <article class="card glass">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M9 21h6m-5-3h4m-2-14a6 6 0 0 0-3.5 10.9c.9.7 1.5 1.3 1.5 2.1h4c0-.8.6-1.4 1.5-2.1A6 6 0 0 0 12 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Critical Thinking</h3>
+            <p>Asking who made this, why, and what it wants from you — before you like, share, or believe.</p>
+          </article>
+
+          <article class="card glass">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M12 4a8 8 0 1 0 8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Balance</h3>
+            <p>Shaping your feed and your habits on purpose, so the algorithm works for you — not on you.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. OUR PRESENTATION ============ -->
+    <section class="section" id="presentation">
+      <div class="container">
+        <p class="kicker" data-reveal>Our Presentation</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          One session. <span class="grad-text">Seven skills that stick.</span>
+        </h2>
+        <p class="section-lead" data-reveal style="--d:.12s">
+          We bring a fast-moving, discussion-driven presentation to your school —
+          built by students, for students, and offered
+          <strong class="free-mark">completely free to schools</strong>.
+        </p>
+
+        <div class="present-layout" data-reveal style="--d:.18s">
+          <ul class="topic-list glass" aria-label="Presentation topics">
+            <li><span class="tick" aria-hidden="true">✓</span> Navigating social media responsibly</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Spotting misinformation and manipulated media</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Protecting privacy and personal information</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Recognizing common online dangers</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Managing feeds and screen habits thoughtfully</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Avoiding inappropriate content</li>
+            <li><span class="tick" aria-hidden="true">✓</span> Thinking critically about online information</li>
+          </ul>
+
+          <div class="stats">
+            <div class="stat glass">
+              <span class="stat-num"><span data-count="0" data-prefix="$">$0</span></span>
+              <span class="stat-label">Cost to your school — free, no catch</span>
+            </div>
+            <div class="stat glass">
+              <span class="stat-num"><span data-count="45">45</span><em>&nbsp;min</em></span>
+              <span class="stat-label">Flexible session length — we fit your bell schedule</span>
+            </div>
+            <div class="stat glass">
+              <span class="stat-num"><span data-count="7">7</span><em>&nbsp;topics</em></span>
+              <span class="stat-label">Core skills covered, with live examples and Q&amp;A</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Repeated conversion CTA after the Presentation section -->
+        <div class="cta-banner glass-strong" data-reveal style="--d:.24s">
+          <div>
+            <h3>Bring Scroll Smart to your school</h3>
+            <p>One email is all it takes — the subject and details are pre-filled for you.</p>
+          </div>
+          <a class="btn btn-primary btn-lg" href="mailto:neil.gupta@scroll-smart.com,aiden.attarha@scroll-smart.com?subject=Presentation%20Request%20%E2%80%94%20%5BYour%20School%20Name%5D&body=Hi%20Scroll%20Smart%20team%2C%0A%0ASchool%20name%3A%20%0AContact%20person%20%26%20role%3A%20%0APreferred%20dates%2Ftimes%3A%20%0AGrade%20level(s)%20%26%20audience%20size%3A%20%0A%0AWe%27re%20interested%20in%20scheduling%20a%20Scroll%20Smart%20presentation%20at%20our%20school.%0A%0AThank%20you!">
+            Request a Presentation
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 10h13m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. WHY US ============ -->
+    <section class="section" id="why-us">
+      <div class="container">
+        <p class="kicker" data-reveal>Why Us</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          Students actually <span class="grad-text">listen to us.</span>
+        </h2>
+        <p class="section-lead" data-reveal style="--d:.12s">
+          Every school has heard an adult explain the internet to teenagers.
+          Scroll Smart is what happens when the message comes from the row behind them instead.
+        </p>
+
+        <div class="card-grid two" data-reveal style="--d:.18s">
+          <article class="card glass why-card">
+            <span class="why-num" aria-hidden="true">01</span>
+            <h3>Peer-to-peer, for real</h3>
+            <p>We're students who grew up on these platforms. When a near-peer says "here's the scam that
+               almost got me," it lands in a way no assembly speaker can match — because it's not a warning
+               from outside their world, it's advice from inside it.</p>
+          </article>
+
+          <article class="card glass why-card">
+            <span class="why-num" aria-hidden="true">02</span>
+            <h3>Free for schools</h3>
+            <p>No cost, no product to buy, no strings. We're a student-led initiative doing this because
+               we think it matters — which means booking us is a decision you can make in one email,
+               not one budget cycle.</p>
+          </article>
+
+          <article class="card glass why-card">
+            <span class="why-num" aria-hidden="true">03</span>
+            <h3>Practical, not preachy</h3>
+            <p>We never tell students to delete their apps. We show them how to audit a privacy setting,
+               reverse-image-search a viral post, and reshape a feed — concrete moves they can make on
+               their own phones the same afternoon.</p>
+          </article>
+
+          <article class="card glass why-card">
+            <span class="why-num" aria-hidden="true">04</span>
+            <h3>Evidence-minded</h3>
+            <p>Our content draws on published media-literacy research and how platforms actually work —
+               recommendation systems, engagement incentives, dark patterns — not scare stories or
+               secondhand myths about "kids these days."</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5. TESTIMONIALS (HIDDEN BY DEFAULT) ============
+         HOW TO UNHIDE: delete the class "is-hidden" from the <section> tag
+         below (keep "section"), then fill in the [EDIT: TESTIMONIAL] quotes.
+         Optionally add a Testimonials link to the nav (see comment in <nav>).
+         ============================================================== -->
+    <section class="section is-hidden" id="testimonials">
+      <div class="container">
+        <p class="kicker" data-reveal>Trusted By Educators</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          What schools <span class="grad-text">are saying.</span>
+        </h2>
+
+        <div class="card-grid three" data-reveal style="--d:.12s">
+          <!-- [EDIT: TESTIMONIAL] Quote 1 -->
+          <figure class="card glass quote-card">
+            <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+            <blockquote><p>[TESTIMONIAL PLACEHOLDER — one or two sentences from an educator about the presentation's impact.]</p></blockquote>
+            <figcaption>
+              <span class="quote-name">[Name Placeholder]</span>
+              <span class="quote-role">[Title, School Name]</span>
+            </figcaption>
+          </figure>
+
+          <!-- [EDIT: TESTIMONIAL] Quote 2 -->
+          <figure class="card glass quote-card">
+            <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+            <blockquote><p>[TESTIMONIAL PLACEHOLDER — one or two sentences from an educator about the presentation's impact.]</p></blockquote>
+            <figcaption>
+              <span class="quote-name">[Name Placeholder]</span>
+              <span class="quote-role">[Title, School Name]</span>
+            </figcaption>
+          </figure>
+
+          <!-- [EDIT: TESTIMONIAL] Quote 3 -->
+          <figure class="card glass quote-card">
+            <div class="quote-mark" aria-hidden="true">&ldquo;</div>
+            <blockquote><p>[TESTIMONIAL PLACEHOLDER — one or two sentences from an educator about the presentation's impact.]</p></blockquote>
+            <figcaption>
+              <span class="quote-name">[Name Placeholder]</span>
+              <span class="quote-role">[Title, School Name]</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. CO-FOUNDERS / ABOUT ============ -->
+    <section class="section" id="about">
+      <div class="container">
+        <p class="kicker" data-reveal>About Us</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          The students <span class="grad-text">behind Scroll Smart.</span>
+        </h2>
+
+        <div class="card-grid two founders" data-reveal style="--d:.12s">
+          <article class="card glass founder-card">
+            <!-- Aiden photo pending -->
+            <!-- [EDIT: PHOTO] When ready, replace this placeholder div with:
+                 <img class="founder-photo" src="assets/aiden.jpg" alt="Aiden Attarha, Co-Founder" width="118" height="118" /> -->
+            <div class="founder-photo placeholder" role="img" aria-label="Placeholder headshot for Aiden Attarha"><span aria-hidden="true">AA</span></div>
+            <h3>Aiden Attarha</h3>
+            <p class="founder-role">Co-Founder</p>
+            <p class="founder-bio">Aiden Attarha is a high school student and aspiring electrical engineer who has seen firsthand how easily the internet's darker corners can reach young people. Whether he's climbing, gaming, or building hardware, he brings the same focus to Scroll Smart's mission: giving students the awareness to enjoy the online world without being taken advantage of by it. He co-founded Scroll Smart to make sure students learn these lessons before the internet teaches them the hard way.</p>
+          </article>
+
+          <article class="card glass founder-card">
+            <img class="founder-photo" src="assets/neil.jpg" alt="Neil Gupta, Co-Founder" width="118" height="118" />
+            <h3>Neil Gupta</h3>
+            <p class="founder-role">Co-Founder</p>
+            <p class="founder-bio">Neil Gupta is a high school student, researcher, and developer with a passion for understanding how technology shapes the way we think. His work spans brain-computer interface research, algorithmic trading systems, and mobile app development — giving him a firsthand view of how digital platforms are engineered to capture attention. He co-founded Scroll Smart to help students turn that understanding into smarter, safer habits online.</p>
+          </article>
+        </div>
+
+        <!-- ===== 7. FOR PARENTS (micro-section, lives inside About's viewport flow) ===== -->
+        <aside class="parents glass" id="parents" data-reveal style="--d:.2s">
+          <div class="parents-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M4 19V6a2 2 0 0 1 2-2h5v15H6.5A2.5 2.5 0 0 0 4 19zm16 0V6a2 2 0 0 0-2-2h-5v15h4.5a2.5 2.5 0 0 1 2.5 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <h3>For parents</h3>
+            <p>A parent guide and family resources are in the works. Want a heads-up when they're ready —
+              or have a question in the meantime?
+              <a class="text-link" href="mailto:neil.gupta@scroll-smart.com,aiden.attarha@scroll-smart.com?subject=Parent%20Question%20for%20Scroll%20Smart">Email us anytime</a>.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ 8. CONTACT ============ -->
+    <section class="section" id="contact">
+      <div class="container">
+        <p class="kicker" data-reveal>Contact</p>
+        <h2 class="section-title" data-reveal style="--d:.06s">
+          Fifteen seconds to <span class="grad-text">smarter students.</span>
+        </h2>
+        <p class="section-lead" data-reveal style="--d:.12s">
+          Reach either co-founder directly, or hit the button below — it opens an email
+          with the subject and details already filled in.
+        </p>
+
+        <div class="card-grid two contact-grid" data-reveal style="--d:.18s">
+          <div class="card glass contact-card">
+            <h3>Aiden Attarha</h3>
+            <p class="founder-role">Co-Founder</p>
+            <a class="contact-line" href="mailto:aiden.attarha@scroll-smart.com">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              aiden.attarha@scroll-smart.com
+            </a>
+            <a class="contact-line" href="tel:+12144301676">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.6 3.8 8.9 3l2 4.3-1.7 1.5a13 13 0 0 0 5.9 5.9l1.6-1.7 4.3 2-.8 2.3c-.3 1-1.3 1.8-2.4 1.6C10.4 18 5.9 13.5 4.9 6.2c-.1-1.1.6-2 1.7-2.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              +1 (214) 430-1676
+            </a>
+          </div>
+
+          <div class="card glass contact-card">
+            <h3>Neil Gupta</h3>
+            <p class="founder-role">Co-Founder</p>
+            <a class="contact-line" href="mailto:neil.gupta@scroll-smart.com">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              neil.gupta@scroll-smart.com
+            </a>
+            <a class="contact-line" href="tel:+13095307954">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.6 3.8 8.9 3l2 4.3-1.7 1.5a13 13 0 0 0 5.9 5.9l1.6-1.7 4.3 2-.8 2.3c-.3 1-1.3 1.8-2.4 1.6C10.4 18 5.9 13.5 4.9 6.2c-.1-1.1.6-2 1.7-2.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              +1 (309) 530-7954
+            </a>
+          </div>
+        </div>
+
+        <!-- Final conversion CTA -->
+        <div class="cta-banner glass-strong" data-reveal style="--d:.24s">
+          <div>
+            <h3>Ready when you are</h3>
+            <p>Free for your school. Pre-filled email. One click below.</p>
+          </div>
+          <a class="btn btn-primary btn-lg" href="mailto:neil.gupta@scroll-smart.com,aiden.attarha@scroll-smart.com?subject=Presentation%20Request%20%E2%80%94%20%5BYour%20School%20Name%5D&body=Hi%20Scroll%20Smart%20team%2C%0A%0ASchool%20name%3A%20%0AContact%20person%20%26%20role%3A%20%0APreferred%20dates%2Ftimes%3A%20%0AGrade%20level(s)%20%26%20audience%20size%3A%20%0A%0AWe%27re%20interested%20in%20scheduling%20a%20Scroll%20Smart%20presentation%20at%20our%20school.%0A%0AThank%20you!">
+            Request a Presentation
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 10h13m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="footer-name">Scroll Smart</span>
+        <span class="footer-tag">Own your feed. Outsmart the internet.</span>
+      </div>
+      <p class="footer-line">Scroll Smart is a student-led initiative.</p>
+      <p class="footer-meta">
+        <a class="text-link" href="mailto:neil.gupta@scroll-smart.com">neil.gupta@scroll-smart.com</a>
+        <span aria-hidden="true"> · </span>
+        <a class="text-link" href="mailto:aiden.attarha@scroll-smart.com">aiden.attarha@scroll-smart.com</a>
+        <span aria-hidden="true"> · </span>
+        © <span id="year">2026</span> Scroll Smart
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
