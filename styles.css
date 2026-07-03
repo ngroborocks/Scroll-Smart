@@ -595,15 +595,18 @@ main { display: block; }
 
 /* ---------- 13. Why Us ---------- */
 .why-card { position: relative; padding-top: 34px; }
+/* Card numbers: bright gradient so they pop as the card's focal accent */
 .why-num {
   position: absolute;
-  top: 20px; right: 24px;
+  top: 18px; right: 24px;
   font-family: var(--font-head);
-  font-size: 2.3rem;
+  font-size: 2.6rem;
   font-weight: 800;
   line-height: 1;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(160, 175, 255, 0.3);
 }
 
 /* ---------- 14. Testimonials ----------
@@ -664,8 +667,8 @@ main { display: block; }
 }
 .founder-bio { font-size: 0.96rem; }
 
-/* ---------- 16. For Parents (micro-section) ---------- */
-.parents {
+/* ---------- 16. Get Involved (micro-section) ---------- */
+.involve {
   display: flex;
   align-items: flex-start;
   gap: 20px;
@@ -674,7 +677,7 @@ main { display: block; }
   border-radius: var(--radius-lg);
   padding: 26px 28px;
 }
-.parents-icon {
+.involve-icon {
   flex: none;
   display: flex;
   align-items: center;
@@ -685,9 +688,9 @@ main { display: block; }
   background: rgba(255, 142, 122, 0.12);
   border: 1px solid rgba(255, 142, 122, 0.3);
 }
-.parents-icon svg { width: 23px; height: 23px; }
-.parents h3 { font-size: 1.1rem; margin-bottom: 6px; }
-.parents p { color: var(--ink-soft); font-size: 0.97rem; }
+.involve-icon svg { width: 23px; height: 23px; }
+.involve h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.involve p { color: var(--ink-soft); font-size: 0.97rem; }
 
 /* ---------- 17. Contact ---------- */
 /* Audience quick-contact cards ("I'm a Parent / Teacher / Student") */
@@ -791,7 +794,17 @@ a.contact-line:hover { color: var(--teal); }
   .stats { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 860px) {
+/* Tablets (~768–1024px): keep the FULL nav bar, just slightly compacted so
+   brand + all six links + Book Us fit on one line without wrapping */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .nav { padding: 0 8px 0 14px; gap: 4px; }
+  .nav-brand { font-size: 0.95rem; gap: 8px; }
+  .brand-mark { width: 26px; height: 26px; }
+  .nav-link { padding: 8px 8px; font-size: 0.84rem; }
+  .btn-nav { padding: 9px 13px; font-size: 0.84rem; }
+}
+
+@media (max-width: 767.98px) {
   /* Compact nav: brand + Book Us + hamburger; links drop down as a glass panel */
   .nav { padding-right: 8px; }
   .nav-toggle { display: flex; }
@@ -827,7 +840,7 @@ a.contact-line:hover { color: var(--teal); }
   .cta-banner .btn { width: 100%; }
   .hero-cta { width: 100%; }
   .hero-cta .btn-primary { width: 100%; } /* secondary stays compact under it */
-  .parents { flex-direction: column; }
+  .involve { flex-direction: column; }
   .scroll-hint { display: none; }
   .btn-nav { display: none; } /* keep the mobile pill uncluttered; hero CTA is right below */
   .desk-only { display: none; }
