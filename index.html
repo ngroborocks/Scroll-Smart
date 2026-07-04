@@ -5,6 +5,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- ============ SECURITY ============
+       Content-Security-Policy: only allow what the site actually uses.
+         script-src  — our script.js + the Cloudflare Web Analytics beacon
+         style-src   — styles.css + the Google Fonts stylesheet; 'unsafe-inline'
+                       is required because the design uses inline style=""
+                       attributes for animation delays (--d) and chip bob (--bob)
+         font-src    — Google Fonts font files
+         img-src     — local images + data: (the SVG grain texture in styles.css)
+         connect-src — the Cloudflare Analytics reporting endpoint
+       If you ever add a new third-party resource, add its origin to the
+       matching directive here or the browser will silently block it. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
   <!-- ============================================================
        SCROLL SMART — single-page static site
        Files: index.html + styles.css + script.js (+ favicon.svg)
@@ -503,5 +517,11 @@
   </footer>
 
   <script src="script.js"></script>
+
+  <!-- ============ ANALYTICS: Cloudflare Web Analytics ============
+       Token is configured. Stats live at dash.cloudflare.com →
+       Analytics & Logs → Web Analytics. Cookieless — no consent banner needed.
+       Details in ANALYTICS.md. -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "58046425e6104b0e82a09cc996667f0b"}'></script>
 </body>
 </html>
