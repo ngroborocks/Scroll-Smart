@@ -1,45 +1,62 @@
 # Analytics
 
-The site uses **Cloudflare Web Analytics** — a free, cookieless, privacy-first
-pageview tracker. It sets no cookies and does no fingerprinting or cross-site
-tracking, so **no cookie/consent banner is needed**.
+The site runs **two** cookieless, privacy-first trackers side by side. Neither
+sets cookies nor fingerprints visitors, so **no cookie/consent banner is
+needed**.
 
-## Where to view stats
+| Tool | What it's for | Dashboard |
+|------|---------------|-----------|
+| **Cloudflare Web Analytics** | Traffic: pageviews, referrers, countries, devices, Core Web Vitals | [dash.cloudflare.com](https://dash.cloudflare.com) → Analytics & Logs → Web Analytics |
+| **GoatCounter** | Behavior: button clicks and section reach, plus its own pageview/referrer counts | [neil.goatcounter.com](https://neil.goatcounter.com) |
 
-1. Log in at <https://dash.cloudflare.com>
-2. Go to **Analytics & Logs → Web Analytics**
-3. Select the Scroll Smart site
+Both scripts live at the bottom of `index.html`, just before `</body>`. The
+Cloudflare snippet holds its site token; the GoatCounter snippet holds the site
+code (`neil`) in its `data-goatcounter` URL. If either ever changes, also
+update the matching origins in the Content-Security-Policy `<meta>` tag at the
+top of `index.html` — GoatCounter's site code appears there twice (`img-src`
+and `connect-src`).
 
-## Setup
+## GoatCounter event reference
 
-The beacon script lives at the bottom of `index.html`, just before `</body>`:
+Events show up in the GoatCounter dashboard as paths (filter by name).
 
-```html
-<script defer src='https://static.cloudflareinsights.com/beacon.min.js'
-        data-cf-beacon='{"token": "..."}'></script>
-```
+### Click events (`data-goatcounter-click` attributes in `index.html`)
 
-The site token is already configured. If it ever needs to change (e.g. the
-site is re-added in the dashboard), copy the new token from the Web Analytics
-JS snippet and swap it into the `data-cf-beacon` attribute — keep the quotes
-around it.
+| Event | Fires when someone clicks… |
+|-------|----------------------------|
+| `cta-request-nav` | "Book Us" in the floating nav |
+| `cta-request-hero` | "Request a Presentation" in the hero |
+| `cta-request-mid` | "Request a Presentation" in the banner after the Presentation section |
+| `cta-request-contact` | "Request a Presentation" in the final banner at the bottom of Contact |
+| `cta-explore-mission` | "Explore our mission" (secondary hero button) |
+| `cta-get-involved` | "Reach out" in the Get Involved card |
+| `contact-parent` | the "I'm a Parent" contact card |
+| `contact-teacher` | the "I'm a Teacher" contact card |
+| `contact-student` | the "I'm a Student" contact card |
+| `email-aiden` / `email-neil` | a founder's email link in Contact |
+| `phone-aiden` / `phone-neil` | a founder's phone number in Contact |
+| `email-footer` | contactus@scroll-smart.com in the footer |
 
-## What's tracked
+All CTAs are `mailto:` links, so a `cta-request-*` click means "opened a
+pre-filled presentation-request email" — the closest measurable step to the
+site's real conversion, which is that email actually arriving.
 
-- Page views and visits (this is a single-page site, so mostly one path)
-- Referrers — which sites/searches send visitors
-- Country, device type, browser, and OS
-- Core Web Vitals (page-load performance)
+### Section-reach events (fired from `script.js`, section 7)
 
-**Not tracked:** individual visitors, click events, or scroll depth. All CTAs
-are `mailto:` links, so the real conversion signal is presentation-request
-emails arriving in the inbox — analytics here answers "how many people saw the
-page and where did they come from," not "who clicked Book Us."
+`reached-mission`, `reached-presentation`, `reached-why-us`, `reached-about`,
+`reached-contact` — each fires the **first** time that section becomes visible
+in a pageview (at most once per page load). Together they read as a scroll
+funnel: comparing `reached-contact` against `cta-request-*` clicks shows how
+many people who saw the contact section actually started an email.
+
+Implementation notes: reach events use an IntersectionObserver (no scroll
+listeners), and every GoatCounter call is guarded to no-op if `count.js`
+didn't load (ad blockers) — analytics can never break the page.
 
 ## Security note
 
-`index.html` has a Content-Security-Policy `<meta>` tag that allowlists the
-analytics origins (`static.cloudflareinsights.com` for the script,
-`cloudflareinsights.com` for reporting). If you ever switch analytics
-providers, update both the beacon snippet **and** those CSP directives, or the
-browser will silently block the new script.
+The Content-Security-Policy in `index.html` allowlists exactly these analytics
+origins: `static.cloudflareinsights.com` + `cloudflareinsights.com`
+(Cloudflare) and `gc.zgo.at` + `neil.goatcounter.com` (GoatCounter). Any new
+or replacement analytics provider must be added there too, or the browser will
+silently block it.

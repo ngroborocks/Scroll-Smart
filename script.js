@@ -146,4 +146,38 @@
     counters.forEach(function (el) { countObserver.observe(el); });
   }
   // With reduced motion or no IO support, the HTML already shows final values.
+
+  /* ---------- 7. GoatCounter section-reach events ----------
+     Fires "reached-<section>" the first time each major section becomes
+     visible, at most once per page load (unobserve after firing). Uses an
+     IntersectionObserver like the reveal/nav logic above — no scroll
+     listeners, so no jank. No-ops if GoatCounter hasn't loaded (ad blocker,
+     network failure): analytics must never break the page. */
+  function gcEvent(name) {
+    if (window.goatcounter && typeof window.goatcounter.count === "function") {
+      window.goatcounter.count({ path: name, event: true });
+    }
+  }
+
+  var reachIds = ["mission", "presentation", "why-us", "about", "contact"];
+
+  if ("IntersectionObserver" in window) {
+    var reachObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          gcEvent("reached-" + entry.target.id);
+          reachObserver.unobserve(entry.target); // once per page load
+        }
+      });
+      // rootMargin band instead of a % threshold: a % of a very tall section
+      // (e.g. Presentation on mobile) can exceed the viewport and never fire.
+      // This fires once the section reaches the top 60% of the screen,
+      // regardless of section height.
+    }, { rootMargin: "0px 0px -40% 0px", threshold: 0 });
+
+    reachIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) reachObserver.observe(el);
+    });
+  }
 })();
