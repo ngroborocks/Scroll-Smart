@@ -180,4 +180,47 @@
       if (el) reachObserver.observe(el);
     });
   }
+
+  /* ---------- 8. GoatCounter "engaged" event ----------
+     Separates real readers from bounces/bots. Fires "engaged" exactly once
+     per page load, on whichever comes first:
+       (a) the first scroll past 150px, or
+       (b) 10 cumulative seconds with the tab visible.
+     The 1-second tick only counts while the tab is visible, so background
+     time doesn't inflate the count (satisfies "pause when hidden"). After it
+     fires we tear down the scroll listener and the timer — no persistent
+     listeners linger. No cookies/localStorage; reuses gcEvent() from above. */
+  var engagedFired = false;
+  var visibleSeconds = 0;
+  var engageTimer = null;
+
+  function onEngageScroll() {
+    if (window.scrollY > 150) fireEngaged();
+  }
+
+  function engageTick() {
+    if (document.visibilityState !== "hidden") {
+      visibleSeconds += 1;
+      if (visibleSeconds >= 10) fireEngaged();
+    }
+  }
+
+  function fireEngaged() {
+    if (engagedFired) return;
+    engagedFired = true;
+    gcEvent("engaged");
+    window.removeEventListener("scroll", onEngageScroll);
+    if (engageTimer !== null) {
+      clearInterval(engageTimer);
+      engageTimer = null;
+    }
+  }
+
+  // Guard for a reload that restores a scrolled position past the threshold.
+  if (window.scrollY > 150) {
+    fireEngaged();
+  } else {
+    window.addEventListener("scroll", onEngageScroll, { passive: true });
+    engageTimer = setInterval(engageTick, 1000);
+  }
 })();
