@@ -3,6 +3,8 @@
 //   LOGINS   — key "login:<sha256(password)>" -> {role:"admin"|"school", name, schoolId?}
 //              key "rl:<ip>" -> attempt counter (short TTL, login rate limiting)
 //   SCHEDULE — key "schedule:neil" / "schedule:aiden" -> JSON array of class events
+//              key "booking:<uuid>" -> a school's booking request
+//              key "seen:<admin>"   -> epoch seconds an admin last cleared their booking badge
 //   SCHOOLS  — (optional) key "school:<schoolId>" -> {name, bufferMinutes, ...}  [not required for v1]
 // One secret: SESSION_SECRET (set with `wrangler secret put SESSION_SECRET`)
 // One var:    ALLOWED_ORIGIN (e.g. "https://scroll-smart.com")
@@ -227,6 +229,93 @@ async function handleSaveSchedule(request, env) {
   return json({ ok: true, who, count: clean.length });
 }
 
+// ---------- bookings: a school requests a mutually-free window; both admins see it ----------
+async function notifyBooking(env, booking) {
+  const when = DAY_NAMES[booking.day] + ' ' + booking.start + '–' + booking.end;
+  const msg = 'New Scroll Smart booking request\n' +
+    booking.schoolName + ' requested ' + when +
+    (booking.note ? '\nNote: ' + booking.note : '');
+  try {
+    // A single incoming-webhook URL works for Slack ("text") and Discord ("content").
+    if (env.BOOKING_WEBHOOK_URL) {
+      await fetch(env.BOOKING_WEBHOOK_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: msg, content: msg })
+      });
+    }
+    // Optional email via Resend (set RESEND_API_KEY + NOTIFY_TO as secrets).
+    if (env.RESEND_API_KEY && env.NOTIFY_TO) {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: env.NOTIFY_FROM || 'Scroll Smart <onboarding@resend.dev>',
+          to: env.NOTIFY_TO.split(',').map(function (s) { return s.trim(); }),
+          subject: 'New booking request — ' + booking.schoolName,
+          text: msg
+        })
+      });
+    }
+  } catch (e) { /* notifications must never break a booking */ }
+}
+
+async function handleBook(request, env, ctx) {
+  const identity = await requireAuth(request, env, null);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const body = await safeJson(request);
+  if (!body || typeof body.day !== 'number' || body.day < 0 || body.day > 6) return json({ ok: false, error: 'invalid day' }, 400);
+  if (!/^\d{2}:\d{2}$/.test(body.start || '') || !/^\d{2}:\d{2}$/.test(body.end || '')) return json({ ok: false, error: 'invalid time' }, 400);
+  const s = toMin(body.start), e = toMin(body.end);
+  if (s === null || e === null || e <= s) return json({ ok: false, error: 'end must be after start' }, 400);
+
+  const booking = {
+    id: crypto.randomUUID(),
+    schoolId: identity.schoolId || null,
+    schoolName: identity.name || 'Unknown',
+    bookedByRole: identity.role,
+    day: body.day, start: body.start, end: body.end,
+    note: String(body.note || '').slice(0, 280),
+    createdAt: Math.floor(Date.now() / 1000),
+    status: 'new'
+  };
+  await env.SCHEDULE.put('booking:' + booking.id, JSON.stringify(booking));
+  if (ctx && ctx.waitUntil) ctx.waitUntil(notifyBooking(env, booking));
+  else await notifyBooking(env, booking);
+  return json({ ok: true, booking });
+}
+
+async function handleGetBookings(request, env) {
+  const identity = await requireAuth(request, env, ['admin']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const list = await env.SCHEDULE.list({ prefix: 'booking:' });
+  const bookings = [];
+  for (const k of list.keys) {
+    const raw = await env.SCHEDULE.get(k.name);
+    if (raw) { try { bookings.push(JSON.parse(raw)); } catch (e) { /* skip corrupt */ } }
+  }
+  bookings.sort(function (a, b) { return b.createdAt - a.createdAt; });
+  const seenRaw = await env.SCHEDULE.get('seen:' + String(identity.name || '').toLowerCase());
+  const seen = seenRaw ? parseInt(seenRaw, 10) : 0;
+  const unread = bookings.filter(function (b) { return b.createdAt > seen; }).length;
+  return json({ ok: true, bookings: bookings, unread: unread, seen: seen });
+}
+
+async function handleSeenBookings(request, env) {
+  const identity = await requireAuth(request, env, ['admin']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  await env.SCHEDULE.put('seen:' + String(identity.name || '').toLowerCase(), String(Math.floor(Date.now() / 1000)));
+  return json({ ok: true });
+}
+
+async function handleCancelBooking(request, env) {
+  const identity = await requireAuth(request, env, ['admin']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const body = await safeJson(request);
+  if (!body || !body.id) return json({ ok: false, error: 'id required' }, 400);
+  await env.SCHEDULE.delete('booking:' + String(body.id));
+  return json({ ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -243,6 +332,10 @@ export default {
       else if (url.pathname === '/api/availability' && request.method === 'GET') resp = await handleAvailability(request, env);
       else if (url.pathname === '/api/schedule' && request.method === 'GET') resp = await handleGetSchedule(request, env);
       else if (url.pathname === '/api/schedule' && request.method === 'POST') resp = await handleSaveSchedule(request, env);
+      else if (url.pathname === '/api/book' && request.method === 'POST') resp = await handleBook(request, env, ctx);
+      else if (url.pathname === '/api/bookings' && request.method === 'GET') resp = await handleGetBookings(request, env);
+      else if (url.pathname === '/api/bookings/seen' && request.method === 'POST') resp = await handleSeenBookings(request, env);
+      else if (url.pathname === '/api/bookings/cancel' && request.method === 'POST') resp = await handleCancelBooking(request, env);
       else resp = json({ ok: false, error: 'not found' }, 404);
     } catch (err) {
       resp = json({ ok: false, error: 'server error' }, 500);

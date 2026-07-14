@@ -176,6 +176,29 @@ input::placeholder{ color:rgba(238,242,255,.35); }
 
 footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; padding-top:4px; }
 
+/* bookings */
+.bookings{ padding:22px; }
+.bookings-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.bookings-head h2{ font-size:1.05rem; display:flex; align-items:center; gap:10px; }
+.badge{ font-family:var(--font-body); font-size:.72rem; font-weight:700; color:#3a0f06;
+  background:var(--coral); padding:2px 10px; border-radius:var(--radius-pill); }
+.blist{ display:flex; flex-direction:column; gap:9px; }
+.bitem{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:var(--radius-md);
+  background:rgba(255,255,255,.04); border:1px solid rgba(160,175,255,.14); flex-wrap:wrap; }
+.bitem.unread{ border-color:rgba(255,142,122,.5); background:rgba(255,142,122,.09); }
+.bitem .bwhen{ font-family:var(--font-head); font-weight:700; font-size:.84rem; color:var(--coral); }
+.bitem .bwho{ font-weight:600; }
+.bitem .bago{ color:var(--ink-soft); font-size:.75rem; margin-left:auto; }
+.bitem .bcancel{ margin-left:4px; }
+.bitem .bnote{ flex-basis:100%; color:var(--ink-soft); font-size:.85rem; }
+.book-btn{ margin-left:auto; padding:7px 16px; }
+.book-form{ flex-basis:100%; display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+.book-form input{ flex:1 1 220px; }
+.book-status{ font-size:.82rem; color:var(--ink-soft); }
+.book-status.ok{ color:var(--teal); }
+.book-status.err{ color:var(--coral); }
+.witem.booked{ opacity:.72; }
+
 /* role-based visibility */
 body[data-role="school"] #controls,
 body[data-role="school"] #editors{ display:none; }
@@ -195,9 +218,9 @@ body[data-role="school"] #editors{ display:none; }
 <!-- ============ LOGIN ============ -->
 <div class="login-wrap" id="loginView" hidden>
   <form class="login-card glass-strong" id="loginForm" autocomplete="on">
-    <p class="eyebrow">Scroll Smart · Scheduler</p>
+    <p class="eyebrow">Scroll Smart · Private scheduling</p>
     <h1>Sign in</h1>
-    <p class="sub">Enter your passphrase to continue. This page is private and unlisted.</p>
+    <p class="sub">Enter your passphrase to continue. This tool is private and unlisted.</p>
     <label class="field">
       <span class="lbl">Passphrase</span>
       <input type="password" id="pw" name="password" autocomplete="current-password" required>
@@ -213,8 +236,8 @@ body[data-role="school"] #editors{ display:none; }
   <header class="hero">
     <div class="hero-top">
       <div>
-        <p class="eyebrow">Unlisted — not linked from scroll-smart.com</p>
-        <h1>When are you <span class="grad-text">both actually free?</span></h1>
+        <p class="eyebrow">Scroll Smart · Private scheduling</p>
+        <h1>Find a time that works <span class="grad-text">for both of you.</span></h1>
       </div>
       <div class="session">
         <span class="whoami" id="whoami"></span>
@@ -224,6 +247,14 @@ body[data-role="school"] #editors{ display:none; }
     <p class="sub" id="heroSub"></p>
     <p class="app-error" id="appError" hidden></p>
   </header>
+
+  <section class="glass bookings" id="bookingsSection" hidden>
+    <div class="bookings-head">
+      <h2>Booking requests <span class="badge" id="bookingBadge" hidden></span></h2>
+      <button class="btn btn-ghost" id="seenBtn" type="button">Mark all as read</button>
+    </div>
+    <div class="blist" id="bookingList"></div>
+  </section>
 
   <section class="controls glass" id="controls">
     <div class="control-row">
@@ -256,11 +287,11 @@ body[data-role="school"] #editors{ display:none; }
 
   <section class="grid-section glass-strong" id="gridSection">
     <h2>Week at a glance</h2>
-    <p class="cap">The glowing bands are where you're both free <em>and</em> there's still time left after travel.</p>
+    <p class="cap">Highlighted bands mark windows when both of you are available, with travel time already deducted.</p>
     <div class="legend" id="legend">
-      <span class="item"><span class="swatch" style="background:var(--teal)"></span><span id="legA">You</span></span>
-      <span class="item"><span class="swatch" style="background:var(--violet)"></span><span id="legB">Them</span></span>
-      <span class="item"><span class="swatch" style="background:rgba(255,142,122,.55);border:1px dashed var(--coral)"></span>Good window to meet</span>
+      <span class="item" id="legItemA"><span class="swatch" style="background:var(--teal)"></span><span id="legA">You</span></span>
+      <span class="item" id="legItemB"><span class="swatch" style="background:var(--violet)"></span><span id="legB">Them</span></span>
+      <span class="item"><span class="swatch" style="background:rgba(255,142,122,.55);border:1px dashed var(--coral)"></span><span id="legWin">Good window to meet</span></span>
     </div>
     <div class="grid-scroll">
       <div class="cal-grid" id="calGrid"></div>
@@ -268,13 +299,13 @@ body[data-role="school"] #editors{ display:none; }
   </section>
 
   <section class="results glass">
-    <h2>Good windows this week</h2>
+    <h2>Available windows this week</h2>
     <p class="cap" id="resultsCap"></p>
     <div class="wlist" id="windowList"></div>
   </section>
 
   <footer>
-    <p>This page lives only at this URL — it isn't linked anywhere on the public site.</p>
+    <p>This page is unlisted and is not linked from the public Scroll Smart site.</p>
   </footer>
 
 </main>
@@ -338,6 +369,14 @@ body[data-role="school"] #editors{ display:none; }
     if(h && m) return h+"h "+m+"m";
     if(h) return h+"h";
     return m+"m";
+  }
+  function hhmm(mins){ var h=Math.floor(mins/60), m=mins%60; return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+  function fmtAgo(ts){
+    var s = Math.max(0, Math.floor(Date.now()/1000) - ts);
+    if(s<60) return "just now";
+    if(s<3600) return Math.floor(s/60)+" min ago";
+    if(s<86400) return Math.floor(s/3600)+" hr ago";
+    return Math.floor(s/86400)+" days ago";
   }
   function mergeIntervals(list){
     var sorted = list.slice().sort(function(a,b){ return a.start-b.start; });
@@ -552,7 +591,7 @@ body[data-role="school"] #editors{ display:none; }
     });
   }
 
-  function renderSummary(windows, buffer){
+  function renderSummary(windows, buffer, bookable){
     var el = document.getElementById('windowList');
     el.innerHTML = "";
     if(windows.length===0){
@@ -566,11 +605,84 @@ body[data-role="school"] #editors{ display:none; }
       var range = document.createElement('span'); range.className="range";
       range.textContent = fmt12(w.start)+" – "+fmt12(w.end)+" free";
       var usableEl = document.createElement('span'); usableEl.className="usable";
-      usableEl.textContent = "~"+fmtDur(w.usable)+" together after travel";
+      usableEl.textContent = "~"+fmtDur(w.usable)+" available after travel";
       item.appendChild(day); item.appendChild(range); item.appendChild(usableEl);
+      if(bookable){
+        var bookBtn = document.createElement('button'); bookBtn.type="button";
+        bookBtn.className="btn btn-primary book-btn"; bookBtn.textContent="Request booking";
+        bookBtn.addEventListener('click', function(){ openBooking(item, w, bookBtn); });
+        item.appendChild(bookBtn);
+      }
       el.appendChild(item);
     });
   }
+
+  // Inline booking form shown to schools when they request a window.
+  function openBooking(item, w, bookBtn){
+    if(item.querySelector('.book-form')) return;
+    var form = document.createElement('div'); form.className="book-form";
+    var note = document.createElement('input'); note.type="text"; note.maxLength=280;
+    note.placeholder="Optional note (e.g. preferred time, audience size, school name)";
+    var send = document.createElement('button'); send.type="button"; send.className="btn btn-primary"; send.textContent="Send request";
+    var cancel = document.createElement('button'); cancel.type="button"; cancel.className="btn btn-ghost"; cancel.textContent="Cancel";
+    var status = document.createElement('span'); status.className="book-status";
+    send.addEventListener('click', function(){
+      send.disabled = true; status.className="book-status"; status.textContent="Sending…";
+      api('/api/book', { method:'POST', body:{ day:w.dayIdx, start:hhmm(w.start), end:hhmm(w.end), note:note.value } }).then(function(res){
+        if(res.status===200 && res.body.ok){
+          item.classList.add('booked');
+          if(bookBtn){ bookBtn.disabled = true; bookBtn.textContent = "Requested ✓"; }
+          form.innerHTML = "";
+          var okEl = document.createElement('span'); okEl.className="book-status ok";
+          okEl.textContent = "Request submitted — the Scroll Smart team will confirm shortly.";
+          form.appendChild(okEl);
+        } else {
+          send.disabled = false; status.className="book-status err";
+          status.textContent = (res.body && res.body.error) || "Could not submit request. Please try again.";
+        }
+      });
+    });
+    cancel.addEventListener('click', function(){ form.remove(); });
+    form.appendChild(note); form.appendChild(send); form.appendChild(cancel); form.appendChild(status);
+    item.appendChild(form);
+    note.focus();
+  }
+
+  // ---------- bookings panel (admins) ----------
+  var bookingPoll = null;
+
+  function loadBookings(){
+    return api('/api/bookings').then(function(res){
+      if(res.status===200 && res.body.ok) renderBookings(res.body.bookings, res.body.unread, res.body.seen);
+    });
+  }
+  function renderBookings(bookings, unread, seen){
+    var list = document.getElementById('bookingList'); list.innerHTML = "";
+    var badge = document.getElementById('bookingBadge');
+    if(unread>0){ badge.hidden = false; badge.textContent = unread + " new"; }
+    else { badge.hidden = true; }
+    document.title = (unread>0 ? "(" + unread + ") " : "") + "Schedule Sync — unlisted";
+    if(!bookings.length){
+      var p = document.createElement('p'); p.className="empty"; p.textContent = "No booking requests yet.";
+      list.appendChild(p); return;
+    }
+    bookings.forEach(function(b){
+      var item = document.createElement('div'); item.className = "bitem" + (b.createdAt>seen ? " unread" : "");
+      var when = document.createElement('span'); when.className="bwhen";
+      var dayName = (DAYS[b.day]||{}).full || "";
+      when.textContent = dayName + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
+      var who = document.createElement('span'); who.className="bwho"; who.textContent = b.schoolName;
+      var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
+      var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
+      cancel.title = "Remove this request"; cancel.setAttribute('aria-label','Remove this request');
+      cancel.addEventListener('click', function(){ cancelBooking(b.id); });
+      item.appendChild(when); item.appendChild(who); item.appendChild(ago); item.appendChild(cancel);
+      if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
+      list.appendChild(item);
+    });
+  }
+  function ackBookings(){ api('/api/bookings/seen', { method:'POST' }).then(loadBookings); }
+  function cancelBooking(id){ api('/api/bookings/cancel', { method:'POST', body:{ id:id } }).then(loadBookings); }
 
   // ---------- editor wiring (editable side only) ----------
   function wireEditor(containerId, list, rerender){
@@ -620,15 +732,25 @@ body[data-role="school"] #editors{ display:none; }
     nameB = other.charAt(0).toUpperCase()+other.slice(1);
 
     document.getElementById('heroSub').textContent =
-      "You're editing " + nameA + "'s classes. " + nameB + "'s are shown read-only. " +
-      "The glowing bands are when you're both free after the travel buffer.";
+      "Manage your class schedule below. " + nameB + "'s is shown read-only. " +
+      "Highlighted windows are when you're both available, accounting for travel time.";
     document.getElementById('hdA').textContent = nameA + "'s";
     document.getElementById('hdB').textContent = nameB + "'s";
+    document.getElementById('legItemA').hidden = false;
+    document.getElementById('legItemB').hidden = false;
+    document.getElementById('legWin').textContent = "Good window to meet";
     document.getElementById('legA').textContent = nameA;
     document.getElementById('legB').textContent = nameB;
-    document.getElementById('capA').textContent = "Your class times — edits are saved when you press Save changes.";
-    document.getElementById('capB').textContent = nameB + "'s schedule — read-only.";
-    document.getElementById('resultsCap').textContent = "Recomputed live as you edit, using the travel buffer above.";
+    document.getElementById('capA').textContent = "Your class schedule. Changes are saved when you select Save changes.";
+    document.getElementById('capB').textContent = nameB + "'s schedule (read-only).";
+    document.getElementById('resultsCap').textContent = "Updates automatically as you edit, based on the travel buffer above.";
+
+    // Booking requests panel — visible to both founders, refreshed periodically.
+    document.getElementById('bookingsSection').hidden = false;
+    document.getElementById('seenBtn').addEventListener('click', ackBookings);
+    loadBookings();
+    if(bookingPoll) clearInterval(bookingPoll);
+    bookingPoll = setInterval(loadBookings, 20000);
 
     return Promise.all([ api('/api/schedule?who='+self), api('/api/schedule?who='+other) ]).then(function(res){
       var rSelf = res[0], rOther = res[1];
@@ -675,10 +797,12 @@ body[data-role="school"] #editors{ display:none; }
   function initSchool(){
     document.body.dataset.role = 'school';
     document.getElementById('gridSection').querySelector('.cap').textContent =
-      "Open windows when both founders are free — after their travel buffer.";
-    // school view shows only good windows (raw class times stay on the server)
-    var legend = document.getElementById('legend');
-    legend.innerHTML = '<span class="item"><span class="swatch" style="background:rgba(255,142,122,.55);border:1px dashed var(--coral)"></span>Good window to meet</span>';
+      "Windows when both founders are available, with travel time accounted for.";
+    // school view shows only availability windows (raw class times stay on the server).
+    // Hide the founder legend items (don't destroy them — the admin view reuses them).
+    document.getElementById('legItemA').hidden = true;
+    document.getElementById('legItemB').hidden = true;
+    document.getElementById('legWin').textContent = "Available window";
 
     return api('/api/availability').then(function(res){
       if(!(res.status===200 && res.body.ok)){
@@ -690,10 +814,10 @@ body[data-role="school"] #editors{ display:none; }
         return { dayIdx:w.day, dayLabel:w.dayName, start:w.start, end:w.end, usable:w.usableMinutes };
       });
       document.getElementById('heroSub').textContent =
-        "Here are the open windows when both founders are free this week (after a " + buffer + "-minute travel buffer).";
-      document.getElementById('resultsCap').textContent = "Times when both founders are free, after a " + buffer + "-minute travel buffer.";
+        "Available windows this week when both founders are free, accounting for a " + buffer + "-minute travel buffer. Select a window to request a presentation.";
+      document.getElementById('resultsCap').textContent = "Select a window below to submit a booking request.";
       renderWindowsGrid(windows);
-      renderSummary(windows, buffer);
+      renderSummary(windows, buffer, true);
     });
   }
 
@@ -712,7 +836,10 @@ body[data-role="school"] #editors{ display:none; }
   function doLogout(){
     token = null; session = null;
     try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
+    if(bookingPoll){ clearInterval(bookingPoll); bookingPoll = null; }
     document.body.removeAttribute('data-role');
+    document.getElementById('bookingsSection').hidden = true;
+    document.title = "Schedule Sync — unlisted";
     showLogin();
   }
 
