@@ -27,7 +27,6 @@
 
        QUICK EDIT GUIDE — search for these markers:
          [EDIT: TESTIMONIAL]  — testimonial quotes (section hidden by default)
-         [EDIT: OG-IMAGE]     — social sharing preview image
        ============================================================ -->
 
   <title>Scroll Smart — Student-Led Online Safety &amp; Media Literacy Presentations</title>
@@ -35,19 +34,23 @@
 
   <!-- Open Graph (link previews in email/text/social) -->
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://scroll-smart.com/" />
   <meta property="og:title" content="Scroll Smart — Own Your Feed. Outsmart the Internet." />
   <meta property="og:description" content="Free, student-led presentations on online safety and media literacy for schools." />
-  <!-- [EDIT: OG-IMAGE] Replace with a real 1200x630 image (e.g. assets/og-image.png)
-       and use an ABSOLUTE URL once the site is deployed, e.g.
-       https://yourdomain.org/assets/og-image.png -->
-  <meta property="og:image" content="assets/og-image.png" />
+  <!-- 1200x630 preview. Must be an ABSOLUTE URL — crawlers don't resolve paths
+       relative to the page, so a relative src shows no preview. -->
+  <meta property="og:image" content="https://scroll-smart.com/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Scroll Smart — Student-Led Online Safety &amp; Media Literacy Presentations" />
   <meta property="og:site_name" content="Scroll Smart" />
 
-  <!-- Twitter card -->
+  <!-- Twitter card (mirrors the Open Graph image; also needs an absolute URL) -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Scroll Smart — Own Your Feed. Outsmart the Internet." />
   <meta name="twitter:description" content="Free, student-led presentations on online safety and media literacy for schools." />
-  <meta name="twitter:image" content="assets/og-image.png" /> <!-- [EDIT: OG-IMAGE] -->
+  <meta name="twitter:image" content="https://scroll-smart.com/assets/og-image.png" />
+  <meta name="twitter:image:alt" content="Scroll Smart — Student-Led Online Safety &amp; Media Literacy Presentations" />
 
   <meta name="theme-color" content="#070b1a" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
