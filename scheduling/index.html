@@ -304,6 +304,13 @@ body[data-role="school"] #editors{ display:none; }
     <div class="wlist" id="windowList"></div>
   </section>
 
+  <section class="glass bookings" id="myBookingsSection" hidden>
+    <div class="bookings-head">
+      <h2>Your requests</h2>
+    </div>
+    <div class="blist" id="myBookingList"></div>
+  </section>
+
   <footer>
     <p>This page is unlisted and is not linked from the public Scroll Smart site.</p>
   </footer>
@@ -636,6 +643,7 @@ body[data-role="school"] #editors{ display:none; }
           var okEl = document.createElement('span'); okEl.className="book-status ok";
           okEl.textContent = "Request submitted — the Scroll Smart team will confirm shortly.";
           form.appendChild(okEl);
+          loadMyBookings(); // reflect the new request in "Your requests"
         } else {
           send.disabled = false; status.className="book-status err";
           status.textContent = (res.body && res.body.error) || "Could not submit request. Please try again.";
@@ -683,6 +691,34 @@ body[data-role="school"] #editors{ display:none; }
   }
   function ackBookings(){ api('/api/bookings/seen', { method:'POST' }).then(loadBookings); }
   function cancelBooking(id){ api('/api/bookings/cancel', { method:'POST', body:{ id:id } }).then(loadBookings); }
+
+  // ---------- "Your requests" panel (school) ----------
+  function loadMyBookings(){
+    return api('/api/my-bookings').then(function(res){
+      if(res.status===200 && res.body.ok) renderMyBookings(res.body.bookings);
+    });
+  }
+  function renderMyBookings(bookings){
+    var list = document.getElementById('myBookingList'); list.innerHTML = "";
+    if(!bookings.length){
+      var p = document.createElement('p'); p.className="empty"; p.textContent = "You haven't requested a window yet.";
+      list.appendChild(p); return;
+    }
+    bookings.forEach(function(b){
+      var item = document.createElement('div'); item.className = "bitem";
+      var when = document.createElement('span'); when.className="bwhen";
+      var dayName = (DAYS[b.day]||{}).full || "";
+      when.textContent = dayName + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
+      var status = document.createElement('span'); status.className="bwho"; status.textContent = "Requested";
+      var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
+      var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
+      cancel.title = "Cancel this request"; cancel.setAttribute('aria-label','Cancel this request');
+      cancel.addEventListener('click', function(){ api('/api/bookings/cancel', { method:'POST', body:{ id:b.id } }).then(loadMyBookings); });
+      item.appendChild(when); item.appendChild(status); item.appendChild(ago); item.appendChild(cancel);
+      if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
+      list.appendChild(item);
+    });
+  }
 
   // ---------- editor wiring (editable side only) ----------
   function wireEditor(containerId, list, rerender){
@@ -818,6 +854,8 @@ body[data-role="school"] #editors{ display:none; }
       document.getElementById('resultsCap').textContent = "Select a window below to submit a booking request.";
       renderWindowsGrid(windows);
       renderSummary(windows, buffer, true);
+      document.getElementById('myBookingsSection').hidden = false;
+      loadMyBookings();
     });
   }
 
@@ -839,6 +877,7 @@ body[data-role="school"] #editors{ display:none; }
     if(bookingPoll){ clearInterval(bookingPoll); bookingPoll = null; }
     document.body.removeAttribute('data-role');
     document.getElementById('bookingsSection').hidden = true;
+    document.getElementById('myBookingsSection').hidden = true;
     document.title = "Schedule Sync — unlisted";
     showLogin();
   }

@@ -230,17 +230,39 @@ async function handleSaveSchedule(request, env) {
 }
 
 // ---------- bookings: a school requests a mutually-free window; both admins see it ----------
-async function notifyBooking(env, booking) {
+// SECURITY: a booking's note/school name is attacker-controlled free text and must
+// never inject a live mention into the outgoing webhook.
+//   Slack broadcasts via <!channel>/<!here>/<!everyone> and parses <...> link/mention
+//     syntax — so we HTML-escape &, <, > in the Slack "text" field, which neutralises
+//     ALL of those sequences (they can no longer start with a literal '<').
+//   Discord pings on @everyone/@here/@role/@user — so we send allowed_mentions:{parse:[]},
+//     which forbids EVERY mention type regardless of what the message text contains.
+function slackEscape(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function buildWebhookPayload(booking) {
   const when = DAY_NAMES[booking.day] + ' ' + booking.start + '–' + booking.end;
-  const msg = 'New Scroll Smart booking request\n' +
+  const rawMsg = 'New Scroll Smart booking request\n' +
     booking.schoolName + ' requested ' + when +
+    (booking.note ? '\nNote: ' + booking.note : '');
+  return {
+    text: slackEscape(rawMsg),        // Slack uses "text": escaped, so no live <!channel>/<@…>/<url>
+    content: rawMsg,                  // Discord uses "content"...
+    allowed_mentions: { parse: [] }   // ...but this makes @everyone/@here/roles/users non-pinging
+  };
+}
+async function notifyBooking(env, booking) {
+  // Plain-text copy for email — email can't "ping", so mentions are harmless there.
+  const emailText = 'New Scroll Smart booking request\n' +
+    booking.schoolName + ' requested ' +
+    DAY_NAMES[booking.day] + ' ' + booking.start + '–' + booking.end +
     (booking.note ? '\nNote: ' + booking.note : '');
   try {
     // A single incoming-webhook URL works for Slack ("text") and Discord ("content").
     if (env.BOOKING_WEBHOOK_URL) {
       await fetch(env.BOOKING_WEBHOOK_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: msg, content: msg })
+        body: JSON.stringify(buildWebhookPayload(booking))
       });
     }
     // Optional email via Resend (set RESEND_API_KEY + NOTIFY_TO as secrets).
@@ -252,7 +274,7 @@ async function notifyBooking(env, booking) {
           from: env.NOTIFY_FROM || 'Scroll Smart <onboarding@resend.dev>',
           to: env.NOTIFY_TO.split(',').map(function (s) { return s.trim(); }),
           subject: 'New booking request — ' + booking.schoolName,
-          text: msg
+          text: emailText
         })
       });
     }
@@ -307,12 +329,48 @@ async function handleSeenBookings(request, env) {
   return json({ ok: true });
 }
 
+// A school sees ONLY its own requests. The filter key is the schoolId from the
+// signed session token — never a schoolId/param supplied by the client — and the
+// projection omits every other school's data by construction.
+async function handleMyBookings(request, env) {
+  const identity = await requireAuth(request, env, ['school']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  if (!identity.schoolId) return json({ ok: true, bookings: [] });
+  const list = await env.SCHEDULE.list({ prefix: 'booking:' });
+  const bookings = [];
+  for (const k of list.keys) {
+    const raw = await env.SCHEDULE.get(k.name);
+    if (!raw) continue;
+    let b;
+    try { b = JSON.parse(raw); } catch (e) { continue; }
+    if (b.schoolId && b.schoolId === identity.schoolId) {
+      // project only this school's own fields — no other school ever appears here
+      bookings.push({ id: b.id, day: b.day, start: b.start, end: b.end, note: b.note, createdAt: b.createdAt, status: b.status });
+    }
+  }
+  bookings.sort(function (a, b) { return b.createdAt - a.createdAt; });
+  return json({ ok: true, bookings: bookings });
+}
+
 async function handleCancelBooking(request, env) {
-  const identity = await requireAuth(request, env, ['admin']);
+  const identity = await requireAuth(request, env, null); // any authenticated; ownership enforced below
   if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
   const body = await safeJson(request);
   if (!body || !body.id) return json({ ok: false, error: 'id required' }, 400);
-  await env.SCHEDULE.delete('booking:' + String(body.id));
+
+  const key = 'booking:' + String(body.id);
+  const raw = await env.SCHEDULE.get(key);
+  if (!raw) return json({ ok: false, error: 'not found' }, 404);
+  let booking;
+  try { booking = JSON.parse(raw); } catch (e) { return json({ ok: false, error: 'not found' }, 404); }
+
+  // Admins manage every request. A school may cancel ONLY a booking it owns, and
+  // ownership is decided by comparing the booking's stored schoolId to the schoolId
+  // in the caller's signed session — the request body never says whose booking it is.
+  const ownsIt = identity.role === 'school' && identity.schoolId && booking.schoolId === identity.schoolId;
+  if (identity.role !== 'admin' && !ownsIt) return json({ ok: false, error: 'forbidden' }, 403);
+
+  await env.SCHEDULE.delete(key);
   return json({ ok: true });
 }
 
@@ -334,6 +392,7 @@ export default {
       else if (url.pathname === '/api/schedule' && request.method === 'POST') resp = await handleSaveSchedule(request, env);
       else if (url.pathname === '/api/book' && request.method === 'POST') resp = await handleBook(request, env, ctx);
       else if (url.pathname === '/api/bookings' && request.method === 'GET') resp = await handleGetBookings(request, env);
+      else if (url.pathname === '/api/my-bookings' && request.method === 'GET') resp = await handleMyBookings(request, env);
       else if (url.pathname === '/api/bookings/seen' && request.method === 'POST') resp = await handleSeenBookings(request, env);
       else if (url.pathname === '/api/bookings/cancel' && request.method === 'POST') resp = await handleCancelBooking(request, env);
       else resp = json({ ok: false, error: 'not found' }, 404);
@@ -346,5 +405,6 @@ export default {
 
 // exported for local testing only — harmless in the real Workers runtime (unused there)
 export const __test = {
-  signToken, verifyToken, sha256Hex, computeWeekWindows, toMin
+  signToken, verifyToken, sha256Hex, computeWeekWindows, toMin,
+  slackEscape, buildWebhookPayload
 };
