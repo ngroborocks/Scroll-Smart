@@ -69,6 +69,29 @@ This also writes `seed-schools-roster.csv` — the one file that has every
 school's actual password next to their name. **Keep that one off GitHub** —
 it's for you and Aiden to know what to send each school, nothing more.
 
+## Booking notifications (optional)
+Schools can request an open window from the page; every request already shows
+up in both founders' portals with an unread badge. To also get *pushed* a
+message on each request, set **one** webhook URL — the same value works for
+both Slack and Discord:
+
+1. **Slack:** create an *Incoming Webhook* (api.slack.com/apps → your app →
+   Incoming Webhooks → Add New Webhook to Workspace) and copy the URL.
+   **Discord:** Channel Settings → Integrations → *Webhooks* → New Webhook →
+   Copy Webhook URL.
+2. Store it as a secret and redeploy:
+   ```
+   wrangler secret put BOOKING_WEBHOOK_URL
+   ```
+   Paste the URL when prompted. Each new booking then posts to that channel.
+
+To try it locally first, add `BOOKING_WEBHOOK_URL=<your url>` to
+`worker/.dev.vars` (gitignored) and make a test booking.
+
+Email is also supported instead of / alongside a webhook: set `RESEND_API_KEY`
+and `NOTIFY_TO` (comma-separated recipients) as secrets to send mail via Resend
+on each booking.
+
 ## What's intentionally NOT built yet
 - A UI for managing/adding individual schools after the initial import —
   right now that's a script you re-run, not a dashboard.
@@ -76,6 +99,6 @@ it's for you and Aiden to know what to send each school, nothing more.
   worker already checks for it if a `SCHOOLS` KV namespace exists with
   `bufferMinutes` on a school's record — just not wired up to real distance
   data yet.
-- Any kind of booking/reservation (schools currently just *see* open windows,
-  they can't claim one through the page). Worth doing once the read-only
-  version has been live for a bit and you know what schools actually want.
+- Confirming/declining a booking from the portal (right now a founder can see
+  a request and remove it, but there's no "confirm & email the school back"
+  step yet).
