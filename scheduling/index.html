@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Schedule Sync — unlisted</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="description" content="Private scheduling tool. Not part of the public Scroll Smart site." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg-0:#070b1a; --bg-1:#0c1230;
+  --ink:#eef2ff; --ink-soft:#b6c0e2;
+  --teal:#4de8c2; --violet:#8b7bff; --coral:#ff8e7a; --sky:#6cc9ff;
+  --glass-bg:rgba(15,21,48,.62); --glass-bg-solid:rgba(15,21,48,.92);
+  --glass-border:rgba(160,175,255,.16); --glass-highlight:rgba(255,255,255,.07);
+  --grad-text:linear-gradient(95deg,#5ff0cb,#7fd4ff 45%,#a99bff 80%,#ffb3a3);
+  --grad-accent:linear-gradient(100deg,#4de8c2,#6cc9ff 55%,#8b7bff);
+  --radius-lg:24px; --radius-md:14px; --radius-sm:9px; --radius-pill:999px;
+  --font-head:"Sora","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-body:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{color-scheme:dark;}
+body{
+  font-family:var(--font-body); font-size:.98rem; line-height:1.6; color:var(--ink);
+  background-color:var(--bg-0);
+  background-image:
+    radial-gradient(120% 90% at 85% -10%, #1b1650 0%, transparent 55%),
+    radial-gradient(110% 80% at -10% 100%, #0b2b3a 0%, transparent 55%);
+  background-attachment:fixed;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{display:block;max-width:100%;}
+h1,h2,h3{font-family:var(--font-head); line-height:1.15; letter-spacing:-.01em;}
+::selection{background:rgba(77,232,194,.35); color:#fff;}
+:focus-visible{outline:2px solid var(--teal); outline-offset:3px; border-radius:6px;}
+[hidden]{display:none !important;}
+
+.wrap{ width:min(1120px, 100% - 40px); margin-inline:auto; padding:48px 0 80px; display:flex; flex-direction:column; gap:26px; }
+
+.glass{ background:var(--glass-bg); border:1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 18px 45px -18px rgba(3,6,20,.8);
+  border-radius:var(--radius-lg); }
+.glass-strong{ background:rgba(17,24,56,.7); border:1px solid rgba(160,175,255,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 24px 60px -20px rgba(3,6,20,.9);
+  border-radius:var(--radius-lg); }
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .glass,.glass-strong{ -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3); }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .glass,.glass-strong{ background:var(--glass-bg-solid); }
+}
+
+/* ---------- login ---------- */
+.login-wrap{ min-height:100vh; display:grid; place-items:center; padding:24px; }
+.login-card{ width:min(420px,100%); padding:32px 30px 30px; display:flex; flex-direction:column; gap:16px; }
+.login-card h1{ font-size:1.7rem; font-weight:800; }
+.login-card .sub{ color:var(--ink-soft); font-size:.92rem; margin-top:-6px; }
+.login-err{ color:var(--coral); font-size:.86rem; }
+
+header.hero{ padding-top:8px; }
+.hero-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px 24px; flex-wrap:wrap; }
+.session{ display:flex; align-items:center; gap:12px; flex:none; }
+.whoami{ font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
+.whoami .role{ font-family:var(--font-head); font-weight:700; color:var(--teal); text-transform:capitalize; }
+.eyebrow{ font-family:var(--font-head); font-size:.78rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-soft); display:inline-flex; align-items:center; gap:8px; margin-bottom:14px; }
+.eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--coral);
+  box-shadow:0 0 0 4px rgba(255,142,122,.18); flex:none; }
+h1{ font-size:clamp(1.7rem, 1.2rem + 2vw, 2.6rem); font-weight:800; max-width:18ch; }
+.grad-text{ background:var(--grad-text); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.hero .sub{ margin-top:14px; color:var(--ink-soft); max-width:60ch; font-size:1rem; }
+.app-error{ margin-top:14px; color:var(--coral); font-size:.9rem; }
+
+.controls{ padding:20px 22px; }
+.control-row{ display:flex; flex-wrap:wrap; gap:18px 30px; align-items:flex-end; }
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field span.lbl{ font-size:.74rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); }
+input[type=text], input[type=password], input[type=number], input[type=time], select{
+  font-family:var(--font-body); font-size:.92rem; color:var(--ink);
+  background:rgba(255,255,255,.05); border:1px solid rgba(160,175,255,.22);
+  border-radius:var(--radius-sm); padding:9px 11px; min-width:0;
+}
+input[type=number]{ width:80px; }
+input[type=time]{ width:auto; }
+input:disabled, select:disabled{ opacity:.62; cursor:default; }
+input::placeholder{ color:rgba(238,242,255,.35); }
+.buffer-wrap{ display:flex; align-items:center; gap:8px; }
+.buffer-wrap span.suffix{ font-size:.85rem; color:var(--ink-soft); }
+
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-family:var(--font-head); font-weight:700; font-size:.86rem;
+  padding:9px 16px; border-radius:var(--radius-pill); border:1px solid transparent; cursor:pointer;
+  transition: transform .2s var(--ease-out), background .2s, border-color .2s, opacity .2s; }
+.btn-ghost{ color:var(--ink); background:rgba(255,255,255,.06); border-color:rgba(160,175,255,.28); }
+.btn-ghost:hover{ transform:translateY(-1px); background:rgba(255,255,255,.11); border-color:rgba(160,175,255,.5); }
+.btn-primary{ color:#062018; background:var(--grad-accent);
+  box-shadow:0 12px 30px -12px rgba(77,232,194,.6); }
+.btn-primary:hover{ transform:translateY(-1px); }
+.btn:disabled{ opacity:.55; cursor:default; transform:none; }
+
+.editors{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.editor{ padding:20px 20px 22px; }
+.editor h2{ font-size:1rem; display:flex; align-items:center; gap:9px; margin-bottom:4px;}
+.editor h2 .dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+.editor .cap{ font-size:.78rem; color:var(--ink-soft); margin-bottom:14px; }
+.editor.readonly{ opacity:.96; }
+.editor.readonly .cap{ color:var(--sky); }
+.col-labels{ display:grid; grid-template-columns:78px 100px 100px 1fr 26px; gap:8px; font-size:.68rem;
+  color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; padding:0 2px 6px; }
+.rows{ display:flex; flex-direction:column; gap:8px; }
+.row{ display:grid; grid-template-columns:78px 100px 100px 1fr 26px; gap:8px; align-items:center; }
+.editor.readonly .col-labels, .editor.readonly .row{ grid-template-columns:78px 100px 100px 1fr; }
+.row select{ padding:9px 4px; font-size:.8rem; }
+.row.row-invalid input[type=time]{ border-color:var(--coral); background:rgba(255,142,122,.1); }
+.row .del{ width:26px; height:26px; border-radius:50%; border:1px solid rgba(160,175,255,.22);
+  background:rgba(255,255,255,.05); color:var(--ink-soft); cursor:pointer; font-size:.85rem; line-height:1;
+  display:flex; align-items:center; justify-content:center; }
+.row .del:hover{ color:var(--coral); border-color:rgba(255,142,122,.5); background:rgba(255,142,122,.08); }
+.editor .add-row{ margin-top:14px; }
+.save-bar{ display:flex; align-items:center; gap:14px; margin-top:16px; flex-wrap:wrap; }
+.save-status{ font-size:.82rem; color:var(--ink-soft); }
+.save-status.ok{ color:var(--teal); }
+.save-status.err{ color:var(--coral); }
+.rows-empty{ color:var(--ink-soft); font-size:.82rem; padding:4px 2px; }
+
+.grid-section{ padding:24px 22px 26px; }
+.grid-section h2{ font-size:1.05rem; margin-bottom:4px; }
+.grid-section .cap{ color:var(--ink-soft); font-size:.85rem; margin-bottom:16px; }
+.legend{ display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px; font-size:.8rem; color:var(--ink-soft); }
+.legend .item{ display:flex; align-items:center; gap:7px; }
+.legend .swatch{ width:13px; height:13px; border-radius:4px; flex:none; }
+
+.grid-scroll{ overflow-x:auto; padding-bottom:6px; }
+.cal-grid{ display:flex; min-width:780px; }
+.time-gutter{ flex:none; width:52px; position:relative; }
+.time-gutter .hd{ height:30px; }
+.time-gutter .track{ position:relative; }
+.time-gutter .lbl{ position:absolute; right:6px; left:0; text-align:right; font-size:.66rem;
+  color:var(--ink-soft); white-space:nowrap; transform:translateY(-50%); }
+
+.day-col{ flex:1 1 0; min-width:104px; border-left:1px solid var(--glass-border); position:relative; }
+.day-col .hd{ height:30px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-head); font-weight:700; font-size:.78rem; color:var(--ink-soft); }
+.day-col .track{ position:relative; }
+.hour-line{ position:absolute; left:0; right:0; height:1px; background:rgba(160,175,255,.09); }
+
+.window-band{ position:absolute; left:2px; right:2px; border-radius:8px; z-index:1;
+  background:linear-gradient(180deg, rgba(255,142,122,.24), rgba(255,142,122,.1));
+  border:1px dashed rgba(255,142,122,.55);
+  box-shadow:0 0 22px -4px rgba(255,142,122,.45); overflow:hidden; }
+.window-band .wl{ position:sticky; top:3px; font-size:.6rem; font-weight:700; color:#ffe4dc;
+  padding:2px 5px; display:inline-block; }
+
+.ev{ position:absolute; border-radius:7px; padding:3px 5px; overflow:hidden; z-index:2;
+  font-size:.64rem; line-height:1.25; color:#081022; font-weight:600; }
+.ev.a{ background:rgba(77,232,194,.88); }
+.ev.b{ background:rgba(139,123,255,.88); color:#f4f2ff; }
+.ev .name{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.results{ padding:22px; }
+.results h2{ font-size:1.05rem; margin-bottom:4px; }
+.results .cap{ color:var(--ink-soft); font-size:.85rem; margin-bottom:14px; }
+.wlist{ display:flex; flex-direction:column; gap:9px; }
+.witem{ display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius-md);
+  background:rgba(255,255,255,.04); border:1px solid rgba(160,175,255,.14); flex-wrap:wrap; }
+.witem .day{ font-family:var(--font-head); font-weight:700; font-size:.82rem; width:78px; flex:none; color:var(--coral); }
+.witem .range{ font-size:.86rem; flex:1; min-width:180px; }
+.witem .usable{ font-size:.78rem; color:var(--ink-soft); }
+.empty{ color:var(--ink-soft); font-size:.9rem; padding:6px 4px 4px; }
+
+footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; padding-top:4px; }
+
+/* role-based visibility */
+body[data-role="school"] #controls,
+body[data-role="school"] #editors{ display:none; }
+
+@media (max-width:820px){ .editors{ grid-template-columns:1fr; } }
+@media (max-width:640px){
+  .col-labels, .row{ grid-template-columns:64px 88px 88px 1fr 24px; gap:5px; }
+  .editor.readonly .col-labels, .editor.readonly .row{ grid-template-columns:64px 88px 88px 1fr; }
+}
+@media (prefers-reduced-motion:reduce){
+  .btn{ transition-duration:.01s; } .btn-ghost:hover, .btn-primary:hover{ transform:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-wrap" id="loginView" hidden>
+  <form class="login-card glass-strong" id="loginForm" autocomplete="on">
+    <p class="eyebrow">Scroll Smart · Scheduler</p>
+    <h1>Sign in</h1>
+    <p class="sub">Enter your passphrase to continue. This page is private and unlisted.</p>
+    <label class="field">
+      <span class="lbl">Passphrase</span>
+      <input type="password" id="pw" name="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn btn-primary" type="submit" id="loginBtn">Sign in</button>
+    <p class="login-err" id="loginErr" role="alert" hidden></p>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<main class="wrap" id="appView" hidden>
+
+  <header class="hero">
+    <div class="hero-top">
+      <div>
+        <p class="eyebrow">Unlisted — not linked from scroll-smart.com</p>
+        <h1>When are you <span class="grad-text">both actually free?</span></h1>
+      </div>
+      <div class="session">
+        <span class="whoami" id="whoami"></span>
+        <button class="btn btn-ghost" id="logoutBtn" type="button">Log out</button>
+      </div>
+    </div>
+    <p class="sub" id="heroSub"></p>
+    <p class="app-error" id="appError" hidden></p>
+  </header>
+
+  <section class="controls glass" id="controls">
+    <div class="control-row">
+      <label class="field"><span class="lbl">Round-trip travel buffer</span>
+        <span class="buffer-wrap"><input type="number" id="buffer" value="60" min="0" max="240" step="5"><span class="suffix">min</span></span>
+      </label>
+      <div class="field"><span class="lbl">Window shown</span><span style="font-size:.85rem;color:var(--ink-soft);padding:9px 0;">8:00 AM – 9:00 PM</span></div>
+    </div>
+  </section>
+
+  <section class="editors" id="editors">
+    <div class="editor glass" id="editorA" data-person="a">
+      <h2><span class="dot" style="background:var(--teal)"></span><span id="hdA">Your</span> classes</h2>
+      <p class="cap" id="capA">Your class times — edits are saved when you press Save changes.</p>
+      <div class="col-labels"><span>Day</span><span>Start</span><span>End</span><span>What</span><span></span></div>
+      <div class="rows" id="rowsA"></div>
+      <button type="button" class="btn btn-ghost add-row" data-target="a">+ Add class</button>
+      <div class="save-bar">
+        <button type="button" class="btn btn-primary" id="saveBtn">Save changes</button>
+        <span class="save-status" id="saveStatus"></span>
+      </div>
+    </div>
+    <div class="editor glass readonly" id="editorB" data-person="b">
+      <h2><span class="dot" style="background:var(--violet)"></span><span id="hdB">Their</span> classes</h2>
+      <p class="cap" id="capB">Read-only.</p>
+      <div class="col-labels"><span>Day</span><span>Start</span><span>End</span><span>What</span></div>
+      <div class="rows" id="rowsB"></div>
+    </div>
+  </section>
+
+  <section class="grid-section glass-strong" id="gridSection">
+    <h2>Week at a glance</h2>
+    <p class="cap">The glowing bands are where you're both free <em>and</em> there's still time left after travel.</p>
+    <div class="legend" id="legend">
+      <span class="item"><span class="swatch" style="background:var(--teal)"></span><span id="legA">You</span></span>
+      <span class="item"><span class="swatch" style="background:var(--violet)"></span><span id="legB">Them</span></span>
+      <span class="item"><span class="swatch" style="background:rgba(255,142,122,.55);border:1px dashed var(--coral)"></span>Good window to meet</span>
+    </div>
+    <div class="grid-scroll">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </section>
+
+  <section class="results glass">
+    <h2>Good windows this week</h2>
+    <p class="cap" id="resultsCap"></p>
+    <div class="wlist" id="windowList"></div>
+  </section>
+
+  <footer>
+    <p>This page lives only at this URL — it isn't linked anywhere on the public site.</p>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  // ---------- API base: local worker in dev, deployed worker in prod ----------
+  var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:8787'
+    : 'https://scroll-smart-api.YOUR-SUBDOMAIN.workers.dev'; // real one goes here after deploying, see DEPLOY.md
+
+  var TOKEN_KEY = 'ss_sched_token';
+  var token = null;
+  try { token = localStorage.getItem(TOKEN_KEY) || null; } catch (e) { token = null; }
+  var session = null;                 // { role, name, schoolId? }
+  var nameA = 'You', nameB = 'Them';  // display names for the two schedule owners
+
+  // ---------- small fetch helper: returns { ok(network), status, body } ----------
+  function api(path, opts){
+    opts = opts || {};
+    var headers = opts.headers || {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    var init = { method: opts.method || 'GET', headers: headers };
+    if (opts.body !== undefined){ headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
+    return fetch(API_BASE + path, init).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:true, status:r.status, body:j }; });
+    }).catch(function(){ return { ok:false, status:0, body:{ error:'Could not reach the scheduling server. Is it running?' } }; });
+  }
+
+  // ---------- constants + calc (mirrors worker/src/index.js exactly) ----------
+  var DAYS = [
+    {label:'Mon', full:'Monday'},   {label:'Tue', full:'Tuesday'},
+    {label:'Wed', full:'Wednesday'},{label:'Thu', full:'Thursday'},
+    {label:'Fri', full:'Friday'},   {label:'Sat', full:'Saturday'},
+    {label:'Sun', full:'Sunday'}
+  ];
+  var DAY_START = 8*60, DAY_END = 21*60;
+  var SCALE = 0.75, COL_H = (DAY_END-DAY_START)*SCALE;
+
+  var uidCounter = 1;
+  function uid(){ return 'r' + (uidCounter++); }
+  function mk(day,start,end,label){ return {id:uid(), day:day, start:start, end:end, label:label}; }
+
+  var eventsA = [];  // logged-in admin's own classes (editable, left)
+  var eventsB = [];  // the other admin's classes (read-only, right)
+
+  function toMin(hhmm){
+    if(!hhmm) return null;
+    var parts = String(hhmm).split(":");
+    var h = Number(parts[0]), m = Number(parts[1]);
+    if(isNaN(h) || isNaN(m)) return null;
+    return h*60+m;
+  }
+  function fmt12(mins){
+    var h = Math.floor(mins/60), m = mins%60;
+    var h12 = h%12; if(h12===0) h12=12;
+    return h12+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM");
+  }
+  function fmtDur(mins){
+    var h = Math.floor(mins/60), m = mins%60;
+    if(h && m) return h+"h "+m+"m";
+    if(h) return h+"h";
+    return m+"m";
+  }
+  function mergeIntervals(list){
+    var sorted = list.slice().sort(function(a,b){ return a.start-b.start; });
+    var out = [];
+    for(var i=0;i<sorted.length;i++){
+      var iv = sorted[i]; var last = out[out.length-1];
+      if(last && iv.start <= last.end) last.end = Math.max(last.end, iv.end);
+      else out.push({start:iv.start, end:iv.end});
+    }
+    return out;
+  }
+  function freeIntervals(busy, winStart, winEnd){
+    var merged = mergeIntervals(busy).filter(function(b){ return b.end>winStart && b.start<winEnd; });
+    var free = []; var cursor = winStart;
+    for(var i=0;i<merged.length;i++){
+      var b = merged[i]; var s = Math.max(b.start,winStart), e = Math.min(b.end,winEnd);
+      if(s>cursor) free.push({start:cursor,end:s});
+      cursor = Math.max(cursor,e);
+    }
+    if(cursor<winEnd) free.push({start:cursor,end:winEnd});
+    return free;
+  }
+  function intersectFree(freeA, freeB){
+    var out = [];
+    for(var i=0;i<freeA.length;i++) for(var j=0;j<freeB.length;j++){
+      var a = freeA[i], b = freeB[j];
+      var s = Math.max(a.start,b.start), e = Math.min(a.end,b.end);
+      if(e>s) out.push({start:s,end:e});
+    }
+    return out;
+  }
+  function assignLanes(events){
+    var sorted = events.slice().sort(function(a,b){ return a.start-b.start; });
+    var laneEnds = []; var placed = [];
+    for(var i=0;i<sorted.length;i++){
+      var ev = sorted[i]; var li = -1;
+      for(var k=0;k<laneEnds.length;k++){ if(laneEnds[k]<=ev.start){ li=k; break; } }
+      if(li===-1){ li = laneEnds.length; laneEnds.push(0); }
+      laneEnds[li] = ev.end;
+      var copy = {}; for(var key in ev) copy[key]=ev[key];
+      copy.lane = li; placed.push(copy);
+    }
+    for(var p=0;p<placed.length;p++) placed[p].totalLanes = laneEnds.length;
+    return placed;
+  }
+  function validEvents(list){
+    var out = [];
+    for(var i=0;i<list.length;i++){
+      var e = list[i]; var s = toMin(e.start), en = toMin(e.end);
+      if(s!==null && en!==null && en>s) out.push({id:e.id, day:e.day, label:e.label, s:s, en:en});
+    }
+    return out;
+  }
+
+  // ---------- editor rendering ----------
+  function renderRows(containerId, list, editable){
+    var el = document.getElementById(containerId);
+    el.innerHTML = "";
+    if(list.length === 0){
+      var empty = document.createElement('p');
+      empty.className = 'rows-empty';
+      empty.textContent = editable ? 'No classes yet — add one below.' : 'No classes on file.';
+      el.appendChild(empty);
+      return;
+    }
+    list.forEach(function(ev){
+      var row = document.createElement("div");
+      row.className = "row"; row.dataset.id = ev.id;
+      var sMin = toMin(ev.start), eMin = toMin(ev.end);
+      if(sMin===null || eMin===null || eMin<=sMin) row.classList.add('row-invalid');
+
+      var daySel = document.createElement("select");
+      daySel.setAttribute("aria-label","Day"); daySel.dataset.field = "day";
+      DAYS.forEach(function(d,i){
+        var opt = document.createElement("option");
+        opt.value = i; opt.textContent = d.label;
+        if(i===ev.day) opt.selected = true;
+        daySel.appendChild(opt);
+      });
+
+      var startInp = document.createElement("input");
+      startInp.type="time"; startInp.value=ev.start; startInp.dataset.field="start";
+      startInp.setAttribute("aria-label","Start time");
+
+      var endInp = document.createElement("input");
+      endInp.type="time"; endInp.value=ev.end; endInp.dataset.field="end";
+      endInp.setAttribute("aria-label","End time");
+
+      var labelInp = document.createElement("input");
+      labelInp.type="text"; labelInp.value=ev.label; labelInp.dataset.field="label";
+      labelInp.placeholder="Class name"; labelInp.setAttribute("aria-label","Class name");
+
+      row.appendChild(daySel); row.appendChild(startInp); row.appendChild(endInp); row.appendChild(labelInp);
+
+      if(editable){
+        var del = document.createElement("button");
+        del.type="button"; del.className="del"; del.textContent="✕";
+        del.setAttribute("aria-label","Remove this class"); del.dataset.action="delete";
+        row.appendChild(del);
+      } else {
+        daySel.disabled = true; startInp.disabled = true; endInp.disabled = true; labelInp.disabled = true;
+      }
+      el.appendChild(row);
+    });
+  }
+
+  function normalizeWindows(mutualByDay){
+    // mutualByDay: array of {dayIdx, dayLabel, start, end, usable}
+    return mutualByDay;
+  }
+
+  function renderGrid(){
+    var buffer = Math.max(0, Number(document.getElementById('buffer').value) || 0);
+    var evA = validEvents(eventsA), evB = validEvents(eventsB);
+    var grid = document.getElementById('calGrid');
+    grid.innerHTML = "";
+
+    var gutter = document.createElement('div'); gutter.className = "time-gutter";
+    var gHd = document.createElement('div'); gHd.className="hd"; gutter.appendChild(gHd);
+    var gTrack = document.createElement('div'); gTrack.className="track"; gTrack.style.height = COL_H+"px";
+    for(var h=8; h<=21; h++){
+      var lbl = document.createElement('div'); lbl.className="lbl";
+      lbl.style.top = ((h*60-DAY_START)*SCALE) + "px";
+      var h12 = h%12; if(h12===0) h12=12;
+      lbl.textContent = h12+(h<12?" AM":" PM");
+      gTrack.appendChild(lbl);
+    }
+    gutter.appendChild(gTrack); grid.appendChild(gutter);
+
+    var weekWindows = [];
+    DAYS.forEach(function(d, dayIdx){
+      var col = document.createElement('div'); col.className = "day-col";
+      var hd = document.createElement('div'); hd.className="hd"; hd.textContent = d.label; col.appendChild(hd);
+      var track = document.createElement('div'); track.className = "track"; track.style.height = COL_H+"px";
+      for(var h2=8; h2<=21; h2++){
+        var line = document.createElement('div'); line.className="hour-line";
+        line.style.top = ((h2*60-DAY_START)*SCALE)+"px"; track.appendChild(line);
+      }
+
+      var busyA = evA.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
+      var busyB = evB.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
+      var mutual = intersectFree(freeIntervals(busyA, DAY_START, DAY_END), freeIntervals(busyB, DAY_START, DAY_END));
+
+      mutual.forEach(function(w){
+        var usable = (w.end - w.start) - buffer;
+        if(usable > 0){
+          weekWindows.push({dayIdx:dayIdx, dayLabel:d.full, start:w.start, end:w.end, usable:usable});
+          var band = document.createElement('div'); band.className = "window-band";
+          var top = (w.start-DAY_START)*SCALE, bh = (w.end-w.start)*SCALE;
+          band.style.top = top+"px"; band.style.height = bh+"px";
+          band.title = d.full+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(usable)+" together after travel";
+          if(bh >= 20){
+            var wl = document.createElement('span'); wl.className="wl"; wl.textContent = fmtDur(usable); band.appendChild(wl);
+          }
+          track.appendChild(band);
+        }
+      });
+
+      [{list:busyA, cls:'a', side:0}, {list:busyB, cls:'b', side:1}].forEach(function(group){
+        assignLanes(group.list).forEach(function(ev){
+          var block = document.createElement('div'); block.className = "ev " + group.cls;
+          var top2 = (ev.start-DAY_START)*SCALE, bh2 = Math.max(14,(ev.end-ev.start)*SCALE);
+          var halfW = 50, laneW = halfW/ev.totalLanes, left = group.side*halfW + ev.lane*laneW;
+          block.style.top = top2+"px"; block.style.height = bh2+"px";
+          block.style.left = "calc("+left+"% + 2px)"; block.style.width = "calc("+laneW+"% - 4px)";
+          block.title = ev.label+" · "+fmt12(ev.start)+"–"+fmt12(ev.end);
+          var nameSpan = document.createElement('span'); nameSpan.className="name"; nameSpan.textContent = ev.label;
+          block.appendChild(nameSpan); track.appendChild(block);
+        });
+      });
+
+      col.appendChild(track); grid.appendChild(col);
+    });
+
+    renderSummary(weekWindows, buffer);
+  }
+
+  // Read-only calendar for the school role: only the good-window bands, no raw classes.
+  function renderWindowsGrid(windows){
+    var grid = document.getElementById('calGrid');
+    grid.innerHTML = "";
+    var gutter = document.createElement('div'); gutter.className = "time-gutter";
+    var gHd = document.createElement('div'); gHd.className="hd"; gutter.appendChild(gHd);
+    var gTrack = document.createElement('div'); gTrack.className="track"; gTrack.style.height = COL_H+"px";
+    for(var h=8; h<=21; h++){
+      var lbl = document.createElement('div'); lbl.className="lbl";
+      lbl.style.top = ((h*60-DAY_START)*SCALE) + "px";
+      var h12 = h%12; if(h12===0) h12=12;
+      lbl.textContent = h12+(h<12?" AM":" PM");
+      gTrack.appendChild(lbl);
+    }
+    gutter.appendChild(gTrack); grid.appendChild(gutter);
+
+    DAYS.forEach(function(d, dayIdx){
+      var col = document.createElement('div'); col.className = "day-col";
+      var hd = document.createElement('div'); hd.className="hd"; hd.textContent = d.label; col.appendChild(hd);
+      var track = document.createElement('div'); track.className = "track"; track.style.height = COL_H+"px";
+      for(var h2=8; h2<=21; h2++){
+        var line = document.createElement('div'); line.className="hour-line";
+        line.style.top = ((h2*60-DAY_START)*SCALE)+"px"; track.appendChild(line);
+      }
+      windows.filter(function(w){ return w.dayIdx===dayIdx; }).forEach(function(w){
+        var band = document.createElement('div'); band.className = "window-band";
+        band.style.top = ((w.start-DAY_START)*SCALE)+"px"; band.style.height = ((w.end-w.start)*SCALE)+"px";
+        band.title = w.dayLabel+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(w.usable)+" after travel";
+        if((w.end-w.start)*SCALE >= 20){
+          var wl = document.createElement('span'); wl.className="wl"; wl.textContent = fmtDur(w.usable); band.appendChild(wl);
+        }
+        track.appendChild(band);
+      });
+      col.appendChild(track); grid.appendChild(col);
+    });
+  }
+
+  function renderSummary(windows, buffer){
+    var el = document.getElementById('windowList');
+    el.innerHTML = "";
+    if(windows.length===0){
+      var p = document.createElement('p'); p.className="empty";
+      p.textContent = "No shared window clears the "+buffer+"-minute travel buffer this week.";
+      el.appendChild(p); return;
+    }
+    windows.slice().sort(function(a,b){ return a.dayIdx-b.dayIdx || a.start-b.start; }).forEach(function(w){
+      var item = document.createElement('div'); item.className="witem";
+      var day = document.createElement('span'); day.className="day"; day.textContent=w.dayLabel;
+      var range = document.createElement('span'); range.className="range";
+      range.textContent = fmt12(w.start)+" – "+fmt12(w.end)+" free";
+      var usableEl = document.createElement('span'); usableEl.className="usable";
+      usableEl.textContent = "~"+fmtDur(w.usable)+" together after travel";
+      item.appendChild(day); item.appendChild(range); item.appendChild(usableEl);
+      el.appendChild(item);
+    });
+  }
+
+  // ---------- editor wiring (editable side only) ----------
+  function wireEditor(containerId, list, rerender){
+    var el = document.getElementById(containerId);
+    el.addEventListener('input', function(e){
+      var row = e.target.closest('.row'); if(!row) return;
+      var ev = null;
+      for(var i=0;i<list.length;i++){ if(list[i].id===row.dataset.id){ ev = list[i]; break; } }
+      if(!ev) return;
+      var field = e.target.dataset.field;
+      if(field==='day') ev.day = Number(e.target.value);
+      else if(field==='start') ev.start = e.target.value;
+      else if(field==='end') ev.end = e.target.value;
+      else if(field==='label') ev.label = e.target.value;
+      if(field==='start' || field==='end'){
+        var sMin = toMin(ev.start), eMin = toMin(ev.end);
+        row.classList.toggle('row-invalid', !(sMin!==null && eMin!==null && eMin>sMin));
+      }
+      markUnsaved(); rerender();
+    });
+    el.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-action="delete"]'); if(!btn) return;
+      var row = e.target.closest('.row'); var idx = -1;
+      for(var i=0;i<list.length;i++){ if(list[i].id===row.dataset.id){ idx=i; break; } }
+      if(idx>-1){ list.splice(idx,1); renderRows(containerId, list, true); markUnsaved(); rerender(); }
+    });
+  }
+
+  function setStatus(msg, kind){
+    var s = document.getElementById('saveStatus');
+    s.textContent = msg || ""; s.className = "save-status" + (kind ? " "+kind : "");
+  }
+  function markUnsaved(){ setStatus("Unsaved changes", ""); }
+
+  function showError(msg){
+    var e = document.getElementById('appError');
+    if(!msg){ e.hidden = true; e.textContent=""; return; }
+    e.hidden = false; e.textContent = msg;
+  }
+
+  // ---------- role init ----------
+  function initAdmin(){
+    document.body.dataset.role = 'admin';
+    var self = String(session.name || '').toLowerCase();
+    var other = self === 'neil' ? 'aiden' : 'neil';
+    nameA = session.name || (self.charAt(0).toUpperCase()+self.slice(1));
+    nameB = other.charAt(0).toUpperCase()+other.slice(1);
+
+    document.getElementById('heroSub').textContent =
+      "You're editing " + nameA + "'s classes. " + nameB + "'s are shown read-only. " +
+      "The glowing bands are when you're both free after the travel buffer.";
+    document.getElementById('hdA').textContent = nameA + "'s";
+    document.getElementById('hdB').textContent = nameB + "'s";
+    document.getElementById('legA').textContent = nameA;
+    document.getElementById('legB').textContent = nameB;
+    document.getElementById('capA').textContent = "Your class times — edits are saved when you press Save changes.";
+    document.getElementById('capB').textContent = nameB + "'s schedule — read-only.";
+    document.getElementById('resultsCap').textContent = "Recomputed live as you edit, using the travel buffer above.";
+
+    return Promise.all([ api('/api/schedule?who='+self), api('/api/schedule?who='+other) ]).then(function(res){
+      var rSelf = res[0], rOther = res[1];
+      if(!rSelf.ok){ showError(rSelf.body.error); }
+      eventsA = ((rSelf.body && rSelf.body.events) || []).map(function(e){ return mk(e.day, e.start, e.end, e.label); });
+      eventsB = ((rOther.body && rOther.body.events) || []).map(function(e){ return mk(e.day, e.start, e.end, e.label); });
+
+      renderRows('rowsA', eventsA, true);
+      renderRows('rowsB', eventsB, false);
+      wireEditor('rowsA', eventsA, renderGrid);
+      document.getElementById('buffer').addEventListener('input', renderGrid);
+      document.querySelectorAll('.add-row').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          eventsA.push(mk(0,"09:00","10:00","New class"));
+          renderRows('rowsA', eventsA, true); markUnsaved(); renderGrid();
+        });
+      });
+      document.getElementById('saveBtn').addEventListener('click', saveSchedule);
+      renderGrid();
+      setStatus("", "");
+    });
+  }
+
+  function saveSchedule(){
+    var payload = [];
+    for(var i=0;i<eventsA.length;i++){
+      var e = eventsA[i], s = toMin(e.start), en = toMin(e.end);
+      if(s!==null && en!==null && en>s) payload.push({day:e.day, start:e.start, end:e.end, label:e.label});
+    }
+    var btn = document.getElementById('saveBtn');
+    btn.disabled = true; setStatus("Saving…", "");
+    api('/api/schedule', { method:'POST', body:{ events:payload } }).then(function(res){
+      btn.disabled = false;
+      if(res.status===200 && res.body.ok){
+        setStatus("Saved ✓ (" + res.body.count + " classes)", "ok");
+      } else if(res.status===401){
+        setStatus("Session expired — please log in again.", "err"); setTimeout(doLogout, 900);
+      } else {
+        setStatus(res.body.error || "Save failed.", "err");
+      }
+    });
+  }
+
+  function initSchool(){
+    document.body.dataset.role = 'school';
+    document.getElementById('gridSection').querySelector('.cap').textContent =
+      "Open windows when both founders are free — after their travel buffer.";
+    // school view shows only good windows (raw class times stay on the server)
+    var legend = document.getElementById('legend');
+    legend.innerHTML = '<span class="item"><span class="swatch" style="background:rgba(255,142,122,.55);border:1px dashed var(--coral)"></span>Good window to meet</span>';
+
+    return api('/api/availability').then(function(res){
+      if(!(res.status===200 && res.body.ok)){
+        if(res.status===401){ doLogout(); return; }
+        showError(res.body.error || "Could not load availability."); return;
+      }
+      var buffer = res.body.buffer;
+      var windows = (res.body.windows || []).map(function(w){
+        return { dayIdx:w.day, dayLabel:w.dayName, start:w.start, end:w.end, usable:w.usableMinutes };
+      });
+      document.getElementById('heroSub').textContent =
+        "Here are the open windows when both founders are free this week (after a " + buffer + "-minute travel buffer).";
+      document.getElementById('resultsCap').textContent = "Times when both founders are free, after a " + buffer + "-minute travel buffer.";
+      renderWindowsGrid(windows);
+      renderSummary(windows, buffer);
+    });
+  }
+
+  // ---------- auth / boot ----------
+  function showLogin(){ document.getElementById('appView').hidden = true; document.getElementById('loginView').hidden = false; setTimeout(function(){ var p=document.getElementById('pw'); if(p) p.focus(); }, 30); }
+  function showApp(){ document.getElementById('loginView').hidden = true; document.getElementById('appView').hidden = false; }
+
+  function startApp(){
+    showApp(); showError(null);
+    document.getElementById('whoami').innerHTML =
+      'Signed in as <strong>' + (session.name || '') + '</strong> · <span class="role">' + session.role + '</span>';
+    if(session.role === 'admin') return initAdmin();
+    return initSchool();
+  }
+
+  function doLogout(){
+    token = null; session = null;
+    try { localStorage.removeItem(TOKEN_KEY); } catch(e){}
+    document.body.removeAttribute('data-role');
+    showLogin();
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+  document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var pw = document.getElementById('pw').value;
+    var err = document.getElementById('loginErr');
+    var btn = document.getElementById('loginBtn');
+    err.hidden = true; btn.disabled = true;
+    api('/api/login', { method:'POST', body:{ password:pw } }).then(function(res){
+      btn.disabled = false;
+      if(res.status===200 && res.body.ok){
+        token = res.body.token;
+        try { localStorage.setItem(TOKEN_KEY, token); } catch(e){}
+        session = { role: res.body.role, name: res.body.name };
+        document.getElementById('pw').value = "";
+        startApp();
+      } else {
+        err.hidden = false;
+        err.textContent = res.body.error ? (res.body.error.charAt(0).toUpperCase()+res.body.error.slice(1)) : "Login failed.";
+      }
+    });
+  });
+
+  // On load: validate an existing token, else show the login screen.
+  if(token){
+    api('/api/me').then(function(res){
+      if(res.status===200 && res.body.ok){ session = res.body; startApp(); }
+      else { doLogout(); }
+    });
+  } else {
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>

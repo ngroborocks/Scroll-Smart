@@ -1,0 +1,12 @@
+# Scheduling worker — local/dev credentials and wrangler state.
+# These hold real or demo login credentials and must never be committed.
+worker/seed-logins.json
+worker/seed-schools-logins.json
+worker/seed-schools-roster.csv
+worker/local-seed-logins.json
+worker/.wrangler/
+.wrangler/
+
+# Local wrangler dev vars (contains a local-only SESSION_SECRET).
+worker/.dev.vars
+.dev.vars

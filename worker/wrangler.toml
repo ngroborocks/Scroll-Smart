@@ -1,0 +1,24 @@
+name = "scroll-smart-api"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Two KV namespaces. Create both with:
+#   wrangler kv namespace create LOGINS
+#   wrangler kv namespace create SCHEDULE
+# then paste the ids each command prints in place of the placeholders below.
+
+[[kv_namespaces]]
+binding = "LOGINS"
+id = "REPLACE_WITH_LOGINS_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "SCHEDULE"
+id = "REPLACE_WITH_SCHEDULE_NAMESPACE_ID"
+
+[vars]
+ALLOWED_ORIGIN = "https://scroll-smart.com"
+
+# SESSION_SECRET is NOT set here on purpose — secrets don't belong in a file that
+# gets committed to git. Set it once with:
+#   wrangler secret put SESSION_SECRET
+# (paste any long random string when prompted — e.g. `openssl rand -hex 32`)
