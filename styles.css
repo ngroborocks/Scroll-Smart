@@ -349,6 +349,10 @@ main { display: block; }
   html { scroll-snap-type: y proximity; }
   .section { scroll-snap-align: start; }
   .footer { scroll-snap-align: end; }
+  /* Trim the hero below a full viewport so the Mission heading's top edge
+     peeks above the fold on desktop — a reason to keep scrolling. Mobile
+     keeps its own full-height hero (see the max-width: 640px block). */
+  .hero { min-height: 88svh; }
 }
 
 .kicker {
