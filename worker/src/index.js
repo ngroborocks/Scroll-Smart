@@ -98,6 +98,68 @@ function intersectFree(freeA, freeB) {
   return out;
 }
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+// ---------- calendar dates (America/Chicago — the site's home timezone) ----------
+function chicagoToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date()); // YYYY-MM-DD
+}
+function isDateStr(s) {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s + 'T12:00:00Z'));
+}
+function dateToDayIdx(s) { return (new Date(s + 'T12:00:00Z').getUTCDay() + 6) % 7; } // 0=Mon .. 6=Sun
+function addDays(s, n) {
+  const d = new Date(s + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Date-range overrides stored under SCHEDULE key "overrides":
+//   [{from:"YYYY-MM-DD", to:"YYYY-MM-DD", type:"free"|"blocked", label:"Summer break"}]
+// "free"   -> the whole DAY_START..DAY_END window is mutually open that day
+// "blocked"-> no availability that day, regardless of class schedules
+// No override -> fall back to the recurring weekly class schedules.
+function findOverride(overrides, date) {
+  for (const o of overrides) if (o.from <= date && date <= o.to) return o;
+  return null;
+}
+
+// Availability across real calendar dates. Windows keep their raw span; a window
+// is included when it has any positive length. usableMinutes = length - buffer
+// (the IN-PERSON number; virtual sessions need no travel, so clients use
+// lengthMinutes for those and may hide windows whose usableMinutes <= 0).
+function computeDateWindows(neilEvents, aidenEvents, overrides, bufferMin, fromDate, numDays) {
+  const windows = [];
+  for (let i = 0; i < numDays; i++) {
+    const date = addDays(fromDate, i);
+    const d = dateToDayIdx(date);
+    const o = findOverride(overrides, date);
+    let mutual;
+    if (o && o.type === 'blocked') {
+      mutual = [];
+    } else if (o && o.type === 'free') {
+      mutual = [{ start: DAY_START, end: DAY_END }];
+    } else {
+      const busyA = neilEvents.filter(e => e.day === d)
+        .map(e => ({ start: toMin(e.start), end: toMin(e.end) }))
+        .filter(e => e.start !== null && e.end !== null && e.end > e.start);
+      const busyB = aidenEvents.filter(e => e.day === d)
+        .map(e => ({ start: toMin(e.start), end: toMin(e.end) }))
+        .filter(e => e.start !== null && e.end !== null && e.end > e.start);
+      mutual = intersectFree(freeIntervals(busyA, DAY_START, DAY_END), freeIntervals(busyB, DAY_START, DAY_END));
+    }
+    for (const w of mutual) {
+      const len = w.end - w.start;
+      if (len <= 0) continue;
+      windows.push({
+        date, day: d, dayName: DAY_NAMES[d], start: w.start, end: w.end,
+        lengthMinutes: len, usableMinutes: len - bufferMin,
+        override: o ? o.type : null
+      });
+    }
+  }
+  return windows;
+}
+
 function computeWeekWindows(neilEvents, aidenEvents, bufferMin) {
   const windows = [];
   for (let d = 0; d < 7; d++) {
@@ -188,14 +250,53 @@ async function handleAvailability(request, env) {
       if (typeof school.bufferMinutes === 'number') buffer = school.bufferMinutes;
     }
   }
+  const url = new URL(request.url);
   if (identity.role === 'admin') {
-    const url = new URL(request.url);
     const bp = parseInt(url.searchParams.get('buffer') || '', 10);
     if (!isNaN(bp) && bp >= 0) buffer = bp;
   }
 
-  const windows = computeWeekWindows(neilEvents, aidenEvents, buffer);
-  return json({ ok: true, buffer, windows });
+  // Real calendar horizon: from (default today, America/Chicago), weeks (default 10, max 12)
+  let from = url.searchParams.get('from');
+  if (!isDateStr(from)) from = chicagoToday();
+  let weeks = parseInt(url.searchParams.get('weeks') || '10', 10);
+  if (isNaN(weeks) || weeks < 1) weeks = 10;
+  if (weeks > 12) weeks = 12;
+
+  const ovRaw = await env.SCHEDULE.get('overrides');
+  let overrides = [];
+  if (ovRaw) { try { overrides = JSON.parse(ovRaw); } catch (e) { /* treat as none */ } }
+
+  const windows = computeDateWindows(neilEvents, aidenEvents, overrides, buffer, from, weeks * 7);
+  return json({ ok: true, buffer, from, weeks, windows });
+}
+
+// ---------- date overrides (admin): free/blocked calendar ranges ----------
+async function handleGetOverrides(request, env) {
+  const identity = await requireAuth(request, env, ['admin']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const raw = await env.SCHEDULE.get('overrides');
+  let overrides = [];
+  if (raw) { try { overrides = JSON.parse(raw); } catch (e) { /* corrupt -> empty */ } }
+  return json({ ok: true, overrides });
+}
+
+async function handleSaveOverrides(request, env) {
+  const identity = await requireAuth(request, env, ['admin']);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const body = await safeJson(request);
+  if (!body || !Array.isArray(body.overrides)) return json({ ok: false, error: 'overrides array required' }, 400);
+  if (body.overrides.length > 50) return json({ ok: false, error: 'too many overrides' }, 400);
+  const clean = [];
+  for (const o of body.overrides) {
+    if (!o || !isDateStr(o.from) || !isDateStr(o.to)) return json({ ok: false, error: 'each override needs valid from/to dates' }, 400);
+    if (o.from > o.to) return json({ ok: false, error: 'from must be on or before to' }, 400);
+    if (o.type !== 'free' && o.type !== 'blocked') return json({ ok: false, error: 'type must be free or blocked' }, 400);
+    clean.push({ from: o.from, to: o.to, type: o.type, label: String(o.label || '').slice(0, 60) });
+  }
+  clean.sort(function (a, b) { return a.from < b.from ? -1 : 1; });
+  await env.SCHEDULE.put('overrides', JSON.stringify(clean));
+  return json({ ok: true, count: clean.length });
 }
 
 async function handleGetSchedule(request, env) {
@@ -240,10 +341,17 @@ async function handleSaveSchedule(request, env) {
 function slackEscape(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+function bookingSummaryLine(booking) {
+  const when = (booking.date ? booking.date + ' (' + DAY_NAMES[booking.day] + ')' : DAY_NAMES[booking.day]) +
+    ' ' + booking.start + '–' + booking.end;
+  const extras = [];
+  if (booking.format) extras.push(booking.format);
+  if (booking.audienceSize) extras.push('~' + booking.audienceSize + ' students');
+  return booking.schoolName + ' requested ' + when + (extras.length ? ' · ' + extras.join(' · ') : '');
+}
 function buildWebhookPayload(booking) {
-  const when = DAY_NAMES[booking.day] + ' ' + booking.start + '–' + booking.end;
   const rawMsg = 'New Scroll Smart booking request\n' +
-    booking.schoolName + ' requested ' + when +
+    bookingSummaryLine(booking) +
     (booking.note ? '\nNote: ' + booking.note : '');
   return {
     text: slackEscape(rawMsg),        // Slack uses "text": escaped, so no live <!channel>/<@…>/<url>
@@ -254,8 +362,7 @@ function buildWebhookPayload(booking) {
 async function notifyBooking(env, booking) {
   // Plain-text copy for email — email can't "ping", so mentions are harmless there.
   const emailText = 'New Scroll Smart booking request\n' +
-    booking.schoolName + ' requested ' +
-    DAY_NAMES[booking.day] + ' ' + booking.start + '–' + booking.end +
+    bookingSummaryLine(booking) +
     (booking.note ? '\nNote: ' + booking.note : '');
   try {
     // A single incoming-webhook URL works for Slack ("text") and Discord ("content").
@@ -285,17 +392,24 @@ async function handleBook(request, env, ctx) {
   const identity = await requireAuth(request, env, null);
   if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
   const body = await safeJson(request);
-  if (!body || typeof body.day !== 'number' || body.day < 0 || body.day > 6) return json({ ok: false, error: 'invalid day' }, 400);
+  if (!body || !isDateStr(body.date)) return json({ ok: false, error: 'a valid date (YYYY-MM-DD) is required' }, 400);
+  if (body.date < chicagoToday()) return json({ ok: false, error: 'that date has already passed' }, 400);
   if (!/^\d{2}:\d{2}$/.test(body.start || '') || !/^\d{2}:\d{2}$/.test(body.end || '')) return json({ ok: false, error: 'invalid time' }, 400);
   const s = toMin(body.start), e = toMin(body.end);
   if (s === null || e === null || e <= s) return json({ ok: false, error: 'end must be after start' }, 400);
+  const format = body.format === 'virtual' ? 'virtual' : (body.format === 'in-person' ? 'in-person' : null);
+  if (!format) return json({ ok: false, error: 'format must be in-person or virtual' }, 400);
+  const audience = parseInt(body.audienceSize, 10);
+  if (isNaN(audience) || audience < 1 || audience > 5000) return json({ ok: false, error: 'audience size must be a number between 1 and 5000' }, 400);
 
   const booking = {
     id: crypto.randomUUID(),
     schoolId: identity.schoolId || null,
     schoolName: identity.name || 'Unknown',
     bookedByRole: identity.role,
-    day: body.day, start: body.start, end: body.end,
+    date: body.date, day: dateToDayIdx(body.date),
+    start: body.start, end: body.end,
+    format: format, audienceSize: audience,
     note: String(body.note || '').slice(0, 280),
     createdAt: Math.floor(Date.now() / 1000),
     status: 'new'
@@ -437,6 +551,8 @@ export default {
       else if (url.pathname === '/api/book' && request.method === 'POST') resp = await handleBook(request, env, ctx);
       else if (url.pathname === '/api/bookings' && request.method === 'GET') resp = await handleGetBookings(request, env);
       else if (url.pathname === '/api/my-bookings' && request.method === 'GET') resp = await handleMyBookings(request, env);
+      else if (url.pathname === '/api/overrides' && request.method === 'GET') resp = await handleGetOverrides(request, env);
+      else if (url.pathname === '/api/overrides' && request.method === 'POST') resp = await handleSaveOverrides(request, env);
       else if (url.pathname === '/api/bookings/seen' && request.method === 'POST') resp = await handleSeenBookings(request, env);
       else if (url.pathname === '/api/bookings/cancel' && request.method === 'POST') resp = await handleCancelBooking(request, env);
       else if (url.pathname === '/api/change-password' && request.method === 'POST') resp = await handleChangePassword(request, env);
@@ -451,5 +567,6 @@ export default {
 // exported for local testing only — harmless in the real Workers runtime (unused there)
 export const __test = {
   signToken, verifyToken, sha256Hex, computeWeekWindows, toMin,
-  slackEscape, buildWebhookPayload
+  slackEscape, buildWebhookPayload,
+  computeDateWindows, findOverride, dateToDayIdx, addDays, isDateStr
 };

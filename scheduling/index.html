@@ -169,7 +169,7 @@ input::placeholder{ color:rgba(238,242,255,.35); }
 .wlist{ display:flex; flex-direction:column; gap:9px; }
 .witem{ display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius-md);
   background:rgba(255,255,255,.04); border:1px solid rgba(160,175,255,.14); flex-wrap:wrap; }
-.witem .day{ font-family:var(--font-head); font-weight:700; font-size:.82rem; width:78px; flex:none; color:var(--coral); }
+.witem .day{ font-family:var(--font-head); font-weight:700; font-size:.82rem; width:112px; flex:none; color:var(--coral); }
 .witem .range{ font-size:.86rem; flex:1; min-width:180px; }
 .witem .usable{ font-size:.78rem; color:var(--ink-soft); }
 .empty{ color:var(--ink-soft); font-size:.9rem; padding:6px 4px 4px; }
@@ -198,6 +198,41 @@ footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; padding-top:
 .book-status.ok{ color:var(--teal); }
 .book-status.err{ color:var(--coral); }
 .witem.booked{ opacity:.72; }
+
+/* week navigation */
+.week-nav{ display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.week-nav .wk-btn{ width:34px; height:34px; border-radius:50%; border:1px solid rgba(160,175,255,.28);
+  background:rgba(255,255,255,.06); color:var(--ink); cursor:pointer; font-size:.95rem; line-height:1;
+  display:flex; align-items:center; justify-content:center; }
+.week-nav .wk-btn:hover{ background:rgba(255,255,255,.12); }
+.week-nav .wk-btn:disabled{ opacity:.35; cursor:default; }
+.week-nav .wk-label{ font-family:var(--font-head); font-weight:700; font-size:.95rem; }
+.week-nav .wk-today{ margin-left:2px; }
+
+/* date overrides (admin) */
+.overrides{ padding:22px; }
+.overrides h2{ font-size:1.05rem; margin-bottom:4px; }
+.overrides .cap{ color:var(--ink-soft); font-size:.85rem; margin-bottom:14px; }
+.ov-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.ov-item{ display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:var(--radius-md);
+  background:rgba(255,255,255,.04); border:1px solid rgba(160,175,255,.14); flex-wrap:wrap; }
+.ov-item .ov-range{ font-family:var(--font-head); font-weight:700; font-size:.84rem; }
+.ov-item .ov-type{ font-size:.74rem; font-weight:700; padding:2px 10px; border-radius:var(--radius-pill); }
+.ov-item .ov-type.free{ color:#062018; background:var(--teal); }
+.ov-item .ov-type.blocked{ color:#3a0f06; background:var(--coral); }
+.ov-item .ov-label{ color:var(--ink-soft); font-size:.85rem; flex:1; min-width:120px; }
+.ov-form{ display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end; }
+.ov-form input[type=date]{ font-family:var(--font-body); font-size:.92rem; color:var(--ink);
+  background:rgba(255,255,255,.05); border:1px solid rgba(160,175,255,.22); border-radius:var(--radius-sm); padding:8px 10px; }
+.ov-status{ font-size:.82rem; color:var(--ink-soft); }
+.ov-status.err{ color:var(--coral); }
+
+/* format toggle (school) */
+.fmt-toggle{ display:inline-flex; border:1px solid rgba(160,175,255,.28); border-radius:var(--radius-pill); overflow:hidden; }
+.fmt-toggle button{ font-family:var(--font-head); font-weight:700; font-size:.84rem; padding:8px 16px;
+  background:transparent; border:none; color:var(--ink-soft); cursor:pointer; }
+.fmt-toggle button.active{ background:var(--grad-accent); color:#062018; }
+.fmt-note{ font-size:.8rem; color:var(--ink-soft); }
 
 /* change password */
 .changepw{ padding:22px; }
@@ -280,10 +315,38 @@ body[data-role="school"] #editors{ display:none; }
 
   <section class="controls glass" id="controls">
     <div class="control-row">
-      <label class="field"><span class="lbl">Round-trip travel buffer</span>
+      <label class="field"><span class="lbl">Round-trip travel buffer (in-person)</span>
         <span class="buffer-wrap"><input type="number" id="buffer" value="60" min="0" max="240" step="5"><span class="suffix">min</span></span>
       </label>
       <div class="field"><span class="lbl">Window shown</span><span style="font-size:.85rem;color:var(--ink-soft);padding:9px 0;">8:00 AM – 9:00 PM</span></div>
+    </div>
+  </section>
+
+  <section class="glass overrides" id="overridesSection" hidden>
+    <h2>Calendar periods</h2>
+    <p class="cap">Mark date ranges as fully available or unavailable — they take priority over the weekly class schedules (e.g. summer break, exam weeks, trips).</p>
+    <div class="ov-list" id="ovList"></div>
+    <div class="ov-form">
+      <label class="field"><span class="lbl">From</span><input type="date" id="ovFrom"></label>
+      <label class="field"><span class="lbl">To</span><input type="date" id="ovTo"></label>
+      <label class="field"><span class="lbl">Type</span>
+        <select id="ovType"><option value="free">Fully available</option><option value="blocked">Unavailable</option></select>
+      </label>
+      <label class="field" style="flex:1;min-width:160px;"><span class="lbl">Label (optional)</span><input type="text" id="ovLabel" maxlength="60" placeholder="e.g. Summer break"></label>
+      <button type="button" class="btn btn-primary" id="ovAdd">Add period</button>
+      <span class="ov-status" id="ovStatus"></span>
+    </div>
+  </section>
+
+  <section class="controls glass" id="schoolControls" hidden>
+    <div class="control-row">
+      <div class="field"><span class="lbl">Presentation format</span>
+        <span class="fmt-toggle" role="group" aria-label="Presentation format">
+          <button type="button" id="fmtInPerson" class="active">In-person</button>
+          <button type="button" id="fmtVirtual">Virtual</button>
+        </span>
+      </div>
+      <div class="field"><span class="lbl">&nbsp;</span><span class="fmt-note" id="fmtNote">In-person visits include our round-trip travel time, so usable windows are shorter.</span></div>
     </div>
   </section>
 
@@ -310,6 +373,12 @@ body[data-role="school"] #editors{ display:none; }
   <section class="grid-section glass-strong" id="gridSection">
     <h2>Week at a glance</h2>
     <p class="cap">Highlighted bands mark windows when both of you are available, with travel time already deducted.</p>
+    <div class="week-nav">
+      <button type="button" class="wk-btn" id="wkPrev" aria-label="Previous week">‹</button>
+      <span class="wk-label" id="wkLabel"></span>
+      <button type="button" class="wk-btn" id="wkNext" aria-label="Next week">›</button>
+      <button type="button" class="btn btn-ghost wk-today" id="wkToday">This week</button>
+    </div>
     <div class="legend" id="legend">
       <span class="item" id="legItemA"><span class="swatch" style="background:var(--teal)"></span><span id="legA">You</span></span>
       <span class="item" id="legItemB"><span class="swatch" style="background:var(--violet)"></span><span id="legB">Them</span></span>
@@ -406,6 +475,55 @@ body[data-role="school"] #editors{ display:none; }
     if(s<3600) return Math.floor(s/60)+" min ago";
     if(s<86400) return Math.floor(s/3600)+" hr ago";
     return Math.floor(s/86400)+" days ago";
+  }
+
+  // ---------- calendar dates ----------
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function addDaysStr(s,n){
+    var d = new Date(s+"T12:00:00");
+    d.setDate(d.getDate()+n);
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function dayIdxOf(s){ return (new Date(s+"T12:00:00").getDay()+6)%7; } // 0=Mon..6=Sun
+  function mondayOf(s){ return addDaysStr(s, -dayIdxOf(s)); }
+  function fmtDateShort(s){ return new Date(s+"T12:00:00").toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  function fmtDateLong(s){ return new Date(s+"T12:00:00").toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+  function findOverride(list, date){
+    for(var i=0;i<list.length;i++){ if(list[i].from<=date && date<=list[i].to) return list[i]; }
+    return null;
+  }
+
+  // week navigation state (shared by both roles)
+  var WEEKS_AHEAD = 10;                       // how far schools can browse/book
+  var weekStart = mondayOf(todayStr());       // Monday of the currently shown week
+  var overrides = [];                         // admin: date-range overrides
+  var schoolData = null;                      // school: {buffer, windows:[...]} from the server
+  var schoolFormat = 'in-person';             // school: chosen presentation format
+
+  function renderWeekNav(){
+    var lbl = document.getElementById('wkLabel');
+    lbl.textContent = fmtDateLong(weekStart) + " – " + fmtDateLong(addDaysStr(weekStart,6));
+    var minWeek = mondayOf(todayStr());
+    var maxWeek = addDaysStr(minWeek, 7*(WEEKS_AHEAD-1));
+    document.getElementById('wkPrev').disabled = weekStart <= minWeek;
+    document.getElementById('wkNext').disabled = weekStart >= maxWeek;
+  }
+  function shiftWeek(n){
+    var minWeek = mondayOf(todayStr());
+    var maxWeek = addDaysStr(minWeek, 7*(WEEKS_AHEAD-1));
+    var next = addDaysStr(weekStart, 7*n);
+    if(next < minWeek) next = minWeek;
+    if(next > maxWeek) next = maxWeek;
+    weekStart = next;
+    rerenderForRole();
+  }
+  function rerenderForRole(){
+    renderWeekNav();
+    if(document.body.dataset.role === 'admin') renderGrid();
+    else if(document.body.dataset.role === 'school') renderSchoolWeek();
   }
   function mergeIntervals(list){
     var sorted = list.slice().sort(function(a,b){ return a.start-b.start; });
@@ -517,12 +635,7 @@ body[data-role="school"] #editors{ display:none; }
     return mutualByDay;
   }
 
-  function renderGrid(){
-    var buffer = Math.max(0, Number(document.getElementById('buffer').value) || 0);
-    var evA = validEvents(eventsA), evB = validEvents(eventsB);
-    var grid = document.getElementById('calGrid');
-    grid.innerHTML = "";
-
+  function buildGutter(grid){
     var gutter = document.createElement('div'); gutter.className = "time-gutter";
     var gHd = document.createElement('div'); gHd.className="hd"; gutter.appendChild(gHd);
     var gTrack = document.createElement('div'); gTrack.className="track"; gTrack.style.height = COL_H+"px";
@@ -534,30 +647,51 @@ body[data-role="school"] #editors{ display:none; }
       gTrack.appendChild(lbl);
     }
     gutter.appendChild(gTrack); grid.appendChild(gutter);
+  }
+  function buildDayColumn(grid, label){
+    var col = document.createElement('div'); col.className = "day-col";
+    var hd = document.createElement('div'); hd.className="hd"; hd.textContent = label; col.appendChild(hd);
+    var track = document.createElement('div'); track.className = "track"; track.style.height = COL_H+"px";
+    for(var h=8; h<=21; h++){
+      var line = document.createElement('div'); line.className="hour-line";
+      line.style.top = ((h*60-DAY_START)*SCALE)+"px"; track.appendChild(line);
+    }
+    col.appendChild(track); grid.appendChild(col);
+    return track;
+  }
+
+  // Admin grid: the currently selected calendar week. Each date uses its
+  // override (free/blocked) when one exists, else the weekly class schedules.
+  function renderGrid(){
+    var buffer = Math.max(0, Number(document.getElementById('buffer').value) || 0);
+    var evA = validEvents(eventsA), evB = validEvents(eventsB);
+    var grid = document.getElementById('calGrid');
+    grid.innerHTML = "";
+    buildGutter(grid);
 
     var weekWindows = [];
     DAYS.forEach(function(d, dayIdx){
-      var col = document.createElement('div'); col.className = "day-col";
-      var hd = document.createElement('div'); hd.className="hd"; hd.textContent = d.label; col.appendChild(hd);
-      var track = document.createElement('div'); track.className = "track"; track.style.height = COL_H+"px";
-      for(var h2=8; h2<=21; h2++){
-        var line = document.createElement('div'); line.className="hour-line";
-        line.style.top = ((h2*60-DAY_START)*SCALE)+"px"; track.appendChild(line);
-      }
+      var date = addDaysStr(weekStart, dayIdx);
+      var track = buildDayColumn(grid, d.label+" "+fmtDateShort(date));
+      var o = findOverride(overrides, date);
 
-      var busyA = evA.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
-      var busyB = evB.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
-      var mutual = intersectFree(freeIntervals(busyA, DAY_START, DAY_END), freeIntervals(busyB, DAY_START, DAY_END));
+      var busyA = [], busyB = [], mutual;
+      if(o && o.type === 'blocked'){ mutual = []; }
+      else if(o && o.type === 'free'){ mutual = [{start:DAY_START, end:DAY_END}]; }
+      else {
+        busyA = evA.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
+        busyB = evB.filter(function(e){ return e.day===dayIdx; }).map(function(e){ return {start:e.s,end:e.en,label:e.label}; });
+        mutual = intersectFree(freeIntervals(busyA, DAY_START, DAY_END), freeIntervals(busyB, DAY_START, DAY_END));
+      }
 
       mutual.forEach(function(w){
         var usable = (w.end - w.start) - buffer;
         if(usable > 0){
-          weekWindows.push({dayIdx:dayIdx, dayLabel:d.full, start:w.start, end:w.end, usable:usable});
+          weekWindows.push({date:date, dayIdx:dayIdx, start:w.start, end:w.end, usable:usable});
           var band = document.createElement('div'); band.className = "window-band";
-          var top = (w.start-DAY_START)*SCALE, bh = (w.end-w.start)*SCALE;
-          band.style.top = top+"px"; band.style.height = bh+"px";
-          band.title = d.full+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(usable)+" together after travel";
-          if(bh >= 20){
+          band.style.top = ((w.start-DAY_START)*SCALE)+"px"; band.style.height = ((w.end-w.start)*SCALE)+"px";
+          band.title = fmtDateLong(date)+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(usable)+" together after travel"+(o&&o.label?" · "+o.label:"");
+          if((w.end-w.start)*SCALE >= 20){
             var wl = document.createElement('span'); wl.className="wl"; wl.textContent = fmtDur(usable); band.appendChild(wl);
           }
           track.appendChild(band);
@@ -576,65 +710,63 @@ body[data-role="school"] #editors{ display:none; }
           block.appendChild(nameSpan); track.appendChild(block);
         });
       });
-
-      col.appendChild(track); grid.appendChild(col);
     });
 
-    renderSummary(weekWindows, buffer);
+    renderSummary(weekWindows, buffer, false, false);
   }
 
-  // Read-only calendar for the school role: only the good-window bands, no raw classes.
-  function renderWindowsGrid(windows){
+  // School view: the selected calendar week, filtered by chosen format.
+  // In-person deducts the travel buffer; virtual uses the full window.
+  function schoolWindowsForWeek(){
+    if(!schoolData) return [];
+    var end = addDaysStr(weekStart, 6);
+    var out = [];
+    schoolData.windows.forEach(function(w){
+      if(w.date < weekStart || w.date > end) return;
+      var usable = schoolFormat === 'virtual' ? w.lengthMinutes : w.usableMinutes;
+      if(usable > 0) out.push({date:w.date, dayIdx:dayIdxOf(w.date), start:w.start, end:w.end, usable:usable});
+    });
+    return out;
+  }
+
+  function renderSchoolWeek(){
+    var windows = schoolWindowsForWeek();
     var grid = document.getElementById('calGrid');
     grid.innerHTML = "";
-    var gutter = document.createElement('div'); gutter.className = "time-gutter";
-    var gHd = document.createElement('div'); gHd.className="hd"; gutter.appendChild(gHd);
-    var gTrack = document.createElement('div'); gTrack.className="track"; gTrack.style.height = COL_H+"px";
-    for(var h=8; h<=21; h++){
-      var lbl = document.createElement('div'); lbl.className="lbl";
-      lbl.style.top = ((h*60-DAY_START)*SCALE) + "px";
-      var h12 = h%12; if(h12===0) h12=12;
-      lbl.textContent = h12+(h<12?" AM":" PM");
-      gTrack.appendChild(lbl);
-    }
-    gutter.appendChild(gTrack); grid.appendChild(gutter);
-
+    buildGutter(grid);
     DAYS.forEach(function(d, dayIdx){
-      var col = document.createElement('div'); col.className = "day-col";
-      var hd = document.createElement('div'); hd.className="hd"; hd.textContent = d.label; col.appendChild(hd);
-      var track = document.createElement('div'); track.className = "track"; track.style.height = COL_H+"px";
-      for(var h2=8; h2<=21; h2++){
-        var line = document.createElement('div'); line.className="hour-line";
-        line.style.top = ((h2*60-DAY_START)*SCALE)+"px"; track.appendChild(line);
-      }
-      windows.filter(function(w){ return w.dayIdx===dayIdx; }).forEach(function(w){
+      var date = addDaysStr(weekStart, dayIdx);
+      var track = buildDayColumn(grid, d.label+" "+fmtDateShort(date));
+      windows.filter(function(w){ return w.date===date; }).forEach(function(w){
         var band = document.createElement('div'); band.className = "window-band";
         band.style.top = ((w.start-DAY_START)*SCALE)+"px"; band.style.height = ((w.end-w.start)*SCALE)+"px";
-        band.title = w.dayLabel+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(w.usable)+" after travel";
+        band.title = fmtDateLong(date)+" "+fmt12(w.start)+"–"+fmt12(w.end)+" · up to "+fmtDur(w.usable)+(schoolFormat==='virtual'?" (virtual)":" after travel");
         if((w.end-w.start)*SCALE >= 20){
           var wl = document.createElement('span'); wl.className="wl"; wl.textContent = fmtDur(w.usable); band.appendChild(wl);
         }
         track.appendChild(band);
       });
-      col.appendChild(track); grid.appendChild(col);
     });
+    renderSummary(windows, schoolData ? schoolData.buffer : 60, true, schoolFormat === 'virtual');
   }
 
-  function renderSummary(windows, buffer, bookable){
+  function renderSummary(windows, buffer, bookable, virtualMode){
     var el = document.getElementById('windowList');
     el.innerHTML = "";
     if(windows.length===0){
       var p = document.createElement('p'); p.className="empty";
-      p.textContent = "No shared window clears the "+buffer+"-minute travel buffer this week.";
+      p.textContent = virtualMode
+        ? "No shared availability this week — try another week with the arrows above."
+        : "No window clears the "+buffer+"-minute travel buffer this week — try another week, or check virtual availability.";
       el.appendChild(p); return;
     }
-    windows.slice().sort(function(a,b){ return a.dayIdx-b.dayIdx || a.start-b.start; }).forEach(function(w){
+    windows.slice().sort(function(a,b){ return (a.date<b.date?-1:a.date>b.date?1:0) || a.start-b.start; }).forEach(function(w){
       var item = document.createElement('div'); item.className="witem";
-      var day = document.createElement('span'); day.className="day"; day.textContent=w.dayLabel;
+      var day = document.createElement('span'); day.className="day"; day.textContent = fmtDateLong(w.date);
       var range = document.createElement('span'); range.className="range";
       range.textContent = fmt12(w.start)+" – "+fmt12(w.end)+" free";
       var usableEl = document.createElement('span'); usableEl.className="usable";
-      usableEl.textContent = "~"+fmtDur(w.usable)+" available after travel";
+      usableEl.textContent = "~"+fmtDur(w.usable)+(virtualMode ? " available (virtual)" : " available after travel");
       item.appendChild(day); item.appendChild(range); item.appendChild(usableEl);
       if(bookable){
         var bookBtn = document.createElement('button'); bookBtn.type="button";
@@ -647,17 +779,26 @@ body[data-role="school"] #editors{ display:none; }
   }
 
   // Inline booking form shown to schools when they request a window.
+  // Sends the real calendar date plus format (from the page toggle) and audience size.
   function openBooking(item, w, bookBtn){
     if(item.querySelector('.book-form')) return;
     var form = document.createElement('div'); form.className="book-form";
+    var size = document.createElement('input'); size.type="number"; size.min=1; size.max=5000;
+    size.placeholder="Audience size (students)"; size.setAttribute('aria-label','Audience size');
+    size.style.flex = "0 1 190px";
     var note = document.createElement('input'); note.type="text"; note.maxLength=280;
-    note.placeholder="Optional note (e.g. preferred time, audience size, school name)";
-    var send = document.createElement('button'); send.type="button"; send.className="btn btn-primary"; send.textContent="Send request";
+    note.placeholder="Optional note (e.g. preferred time, grade level)";
+    var send = document.createElement('button'); send.type="button"; send.className="btn btn-primary";
+    send.textContent = "Send " + schoolFormat + " request";
     var cancel = document.createElement('button'); cancel.type="button"; cancel.className="btn btn-ghost"; cancel.textContent="Cancel";
     var status = document.createElement('span'); status.className="book-status";
     send.addEventListener('click', function(){
+      var n = parseInt(size.value, 10);
+      if(isNaN(n) || n < 1 || n > 5000){
+        status.className="book-status err"; status.textContent = "Please enter the expected audience size."; size.focus(); return;
+      }
       send.disabled = true; status.className="book-status"; status.textContent="Sending…";
-      api('/api/book', { method:'POST', body:{ day:w.dayIdx, start:hhmm(w.start), end:hhmm(w.end), note:note.value } }).then(function(res){
+      api('/api/book', { method:'POST', body:{ date:w.date, start:hhmm(w.start), end:hhmm(w.end), format:schoolFormat, audienceSize:n, note:note.value } }).then(function(res){
         if(res.status===200 && res.body.ok){
           item.classList.add('booked');
           if(bookBtn){ bookBtn.disabled = true; bookBtn.textContent = "Requested ✓"; }
@@ -673,9 +814,9 @@ body[data-role="school"] #editors{ display:none; }
       });
     });
     cancel.addEventListener('click', function(){ form.remove(); });
-    form.appendChild(note); form.appendChild(send); form.appendChild(cancel); form.appendChild(status);
+    form.appendChild(size); form.appendChild(note); form.appendChild(send); form.appendChild(cancel); form.appendChild(status);
     item.appendChild(form);
-    note.focus();
+    size.focus();
   }
 
   // ---------- bookings panel (admins) ----------
@@ -700,19 +841,59 @@ body[data-role="school"] #editors{ display:none; }
       var item = document.createElement('div'); item.className = "bitem" + (b.createdAt>seen ? " unread" : "");
       var when = document.createElement('span'); when.className="bwhen";
       var dayName = (DAYS[b.day]||{}).full || "";
-      when.textContent = dayName + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
+      when.textContent = (b.date ? fmtDateLong(b.date) : dayName) + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
       var who = document.createElement('span'); who.className="bwho"; who.textContent = b.schoolName;
+      var meta = document.createElement('span'); meta.className="usable";
+      meta.textContent = [b.format, b.audienceSize ? "~"+b.audienceSize+" students" : null].filter(Boolean).join(" · ");
       var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
       var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
       cancel.title = "Remove this request"; cancel.setAttribute('aria-label','Remove this request');
       cancel.addEventListener('click', function(){ cancelBooking(b.id); });
-      item.appendChild(when); item.appendChild(who); item.appendChild(ago); item.appendChild(cancel);
+      item.appendChild(when); item.appendChild(who); item.appendChild(meta); item.appendChild(ago); item.appendChild(cancel);
       if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
       list.appendChild(item);
     });
   }
   function ackBookings(){ api('/api/bookings/seen', { method:'POST' }).then(loadBookings); }
   function cancelBooking(id){ api('/api/bookings/cancel', { method:'POST', body:{ id:id } }).then(loadBookings); }
+
+  // ---------- calendar periods panel (admin) ----------
+  function renderOverrides(){
+    var list = document.getElementById('ovList'); list.innerHTML = "";
+    if(!overrides.length){
+      var p = document.createElement('p'); p.className="empty";
+      p.textContent = "No calendar periods set — availability follows the weekly class schedules.";
+      list.appendChild(p); return;
+    }
+    overrides.forEach(function(o, idx){
+      var item = document.createElement('div'); item.className="ov-item";
+      var range = document.createElement('span'); range.className="ov-range";
+      range.textContent = fmtDateLong(o.from) + " – " + fmtDateLong(o.to);
+      var type = document.createElement('span'); type.className="ov-type "+o.type;
+      type.textContent = o.type === 'free' ? 'Fully available' : 'Unavailable';
+      var label = document.createElement('span'); label.className="ov-label"; label.textContent = o.label || "";
+      var del = document.createElement('button'); del.type="button"; del.className="del"; del.textContent="✕";
+      del.title = "Remove this period"; del.setAttribute('aria-label','Remove this period');
+      del.addEventListener('click', function(){
+        var next = overrides.slice(); next.splice(idx, 1); saveOverrides(next);
+      });
+      item.appendChild(range); item.appendChild(type); item.appendChild(label); item.appendChild(del);
+      list.appendChild(item);
+    });
+  }
+  function saveOverrides(next){
+    var status = document.getElementById('ovStatus');
+    status.className="ov-status"; status.textContent = "Saving…";
+    return api('/api/overrides', { method:'POST', body:{ overrides: next } }).then(function(res){
+      if(res.status===200 && res.body.ok){
+        overrides = next; status.textContent = "";
+        renderOverrides(); renderGrid();
+      } else {
+        status.className="ov-status err";
+        status.textContent = (res.body && res.body.error) || "Could not save.";
+      }
+    });
+  }
 
   // ---------- "Your requests" panel (school) ----------
   function loadMyBookings(){
@@ -730,13 +911,15 @@ body[data-role="school"] #editors{ display:none; }
       var item = document.createElement('div'); item.className = "bitem";
       var when = document.createElement('span'); when.className="bwhen";
       var dayName = (DAYS[b.day]||{}).full || "";
-      when.textContent = dayName + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
+      when.textContent = (b.date ? fmtDateLong(b.date) : dayName) + " " + fmt12(toMin(b.start)) + "–" + fmt12(toMin(b.end));
       var status = document.createElement('span'); status.className="bwho"; status.textContent = "Requested";
+      var meta = document.createElement('span'); meta.className="usable";
+      meta.textContent = [b.format, b.audienceSize ? "~"+b.audienceSize+" students" : null].filter(Boolean).join(" · ");
       var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
       var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
       cancel.title = "Cancel this request"; cancel.setAttribute('aria-label','Cancel this request');
       cancel.addEventListener('click', function(){ api('/api/bookings/cancel', { method:'POST', body:{ id:b.id } }).then(loadMyBookings); });
-      item.appendChild(when); item.appendChild(status); item.appendChild(ago); item.appendChild(cancel);
+      item.appendChild(when); item.appendChild(status); item.appendChild(meta); item.appendChild(ago); item.appendChild(cancel);
       if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
       list.appendChild(item);
     });
@@ -810,11 +993,18 @@ body[data-role="school"] #editors{ display:none; }
     if(bookingPoll) clearInterval(bookingPoll);
     bookingPoll = setInterval(loadBookings, 20000);
 
-    return Promise.all([ api('/api/schedule?who='+self), api('/api/schedule?who='+other) ]).then(function(res){
+    // Calendar periods panel + week navigation
+    document.getElementById('overridesSection').hidden = false;
+    weekStart = mondayOf(todayStr());
+    renderWeekNav();
+
+    return Promise.all([ api('/api/schedule?who='+self), api('/api/schedule?who='+other), api('/api/overrides') ]).then(function(res){
       var rSelf = res[0], rOther = res[1];
       if(!rSelf.ok){ showError(rSelf.body.error); }
       eventsA = ((rSelf.body && rSelf.body.events) || []).map(function(e){ return mk(e.day, e.start, e.end, e.label); });
       eventsB = ((rOther.body && rOther.body.events) || []).map(function(e){ return mk(e.day, e.start, e.end, e.label); });
+      overrides = (res[2].status===200 && res[2].body.ok && res[2].body.overrides) || [];
+      renderOverrides();
 
       renderRows('rowsA', eventsA, true);
       renderRows('rowsB', eventsB, false);
@@ -862,20 +1052,21 @@ body[data-role="school"] #editors{ display:none; }
     document.getElementById('legItemB').hidden = true;
     document.getElementById('legWin').textContent = "Available window";
 
-    return api('/api/availability').then(function(res){
+    document.getElementById('schoolControls').hidden = false;
+    weekStart = mondayOf(todayStr());
+    renderWeekNav();
+
+    return api('/api/availability?weeks=' + WEEKS_AHEAD).then(function(res){
       if(!(res.status===200 && res.body.ok)){
         if(res.status===401){ doLogout(); return; }
         showError(res.body.error || "Could not load availability."); return;
       }
-      var buffer = res.body.buffer;
-      var windows = (res.body.windows || []).map(function(w){
-        return { dayIdx:w.day, dayLabel:w.dayName, start:w.start, end:w.end, usable:w.usableMinutes };
-      });
+      schoolData = { buffer: res.body.buffer, windows: res.body.windows || [] };
       document.getElementById('heroSub').textContent =
-        "Available windows this week when both founders are free, accounting for a " + buffer + "-minute travel buffer. Select a window to request a presentation.";
+        "Browse the coming weeks, choose in-person or virtual, and request a window that works for your school. " +
+        "In-person visits account for a " + schoolData.buffer + "-minute round-trip travel buffer.";
       document.getElementById('resultsCap').textContent = "Select a window below to submit a booking request.";
-      renderWindowsGrid(windows);
-      renderSummary(windows, buffer, true);
+      renderSchoolWeek();
       document.getElementById('myBookingsSection').hidden = false;
       loadMyBookings();
     });
@@ -901,12 +1092,45 @@ body[data-role="school"] #editors{ display:none; }
     document.getElementById('bookingsSection').hidden = true;
     document.getElementById('myBookingsSection').hidden = true;
     document.getElementById('changePwSection').hidden = true;
+    document.getElementById('overridesSection').hidden = true;
+    document.getElementById('schoolControls').hidden = true;
     clearChangePw();
+    schoolData = null; overrides = [];
+    weekStart = mondayOf(todayStr());
     document.title = "Schedule Sync — unlisted";
     showLogin();
   }
 
   document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+  // ---------- week navigation + school format toggle (wired once; renderers dispatch by role) ----------
+  document.getElementById('wkPrev').addEventListener('click', function(){ shiftWeek(-1); });
+  document.getElementById('wkNext').addEventListener('click', function(){ shiftWeek(1); });
+  document.getElementById('wkToday').addEventListener('click', function(){ weekStart = mondayOf(todayStr()); rerenderForRole(); });
+
+  function setFormat(f){
+    schoolFormat = f;
+    document.getElementById('fmtInPerson').classList.toggle('active', f === 'in-person');
+    document.getElementById('fmtVirtual').classList.toggle('active', f === 'virtual');
+    document.getElementById('fmtNote').textContent = f === 'virtual'
+      ? "Virtual sessions need no travel time, so full windows are available."
+      : "In-person visits include our round-trip travel time, so usable windows are shorter.";
+    if(document.body.dataset.role === 'school') renderSchoolWeek();
+  }
+  document.getElementById('fmtInPerson').addEventListener('click', function(){ setFormat('in-person'); });
+  document.getElementById('fmtVirtual').addEventListener('click', function(){ setFormat('virtual'); });
+
+  document.getElementById('ovAdd').addEventListener('click', function(){
+    var from = document.getElementById('ovFrom').value, to = document.getElementById('ovTo').value;
+    var type = document.getElementById('ovType').value, label = document.getElementById('ovLabel').value.trim();
+    var status = document.getElementById('ovStatus');
+    if(!from || !to){ status.className="ov-status err"; status.textContent = "Pick both dates."; return; }
+    if(from > to){ status.className="ov-status err"; status.textContent = "From must be on or before To."; return; }
+    saveOverrides(overrides.concat([{ from:from, to:to, type:type, label:label }])).then(function(){
+      document.getElementById('ovFrom').value = ""; document.getElementById('ovTo').value = "";
+      document.getElementById('ovLabel').value = "";
+    });
+  });
 
   // ---------- change password ----------
   function clearChangePw(keepStatus){
