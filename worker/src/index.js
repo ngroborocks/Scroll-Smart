@@ -459,7 +459,11 @@ async function handleMyBookings(request, env) {
     try { b = JSON.parse(raw); } catch (e) { continue; }
     if (b.schoolId && b.schoolId === identity.schoolId) {
       // project only this school's own fields — no other school ever appears here
-      bookings.push({ id: b.id, day: b.day, start: b.start, end: b.end, note: b.note, createdAt: b.createdAt, status: b.status });
+      bookings.push({
+        id: b.id, date: b.date || null, day: b.day, start: b.start, end: b.end,
+        format: b.format || null, audienceSize: b.audienceSize || null,
+        note: b.note, createdAt: b.createdAt, status: b.status
+      });
     }
   }
   bookings.sort(function (a, b) { return b.createdAt - a.createdAt; });
