@@ -374,6 +374,50 @@ async function handleCancelBooking(request, env) {
   return json({ ok: true });
 }
 
+// Change the caller's OWN password. Requires a valid session AND the current
+// password (which must resolve to the same identity as the session). Passwords
+// are stored only as sha256 keys, so we write the new key and delete the old one.
+async function handleChangePassword(request, env) {
+  const identity = await requireAuth(request, env, null);
+  if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
+  const body = await safeJson(request);
+  if (!body || typeof body.currentPassword !== 'string' || typeof body.newPassword !== 'string') {
+    return json({ ok: false, error: 'currentPassword and newPassword are required' }, 400);
+  }
+  if (body.newPassword.length < 8) {
+    return json({ ok: false, error: 'new password must be at least 8 characters' }, 400);
+  }
+
+  // brute-force guard on the current-password check
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  const rlKey = 'rlpw:' + ip;
+  const attempts = parseInt((await env.LOGINS.get(rlKey)) || '0', 10);
+  if (attempts >= 8) return json({ ok: false, error: 'too many attempts, try again later' }, 429);
+
+  const oldHash = await sha256Hex(body.currentPassword);
+  const raw = await env.LOGINS.get('login:' + oldHash);
+  let record = null;
+  if (raw) { try { record = JSON.parse(raw); } catch (e) { /* corrupt */ } }
+  // The current password must belong to THIS session's account, not just be some valid login.
+  const sameAccount = record
+    && record.role === identity.role
+    && (record.name || '') === (identity.name || '')
+    && (record.schoolId || null) === (identity.schoolId || null);
+  if (!sameAccount) {
+    await env.LOGINS.put(rlKey, String(attempts + 1), { expirationTtl: 600 });
+    return json({ ok: false, error: 'current password is incorrect' }, 401);
+  }
+
+  const newHash = await sha256Hex(body.newPassword);
+  if (newHash === oldHash) return json({ ok: false, error: 'new password must differ from the current one' }, 400);
+  const clash = await env.LOGINS.get('login:' + newHash);
+  if (clash) return json({ ok: false, error: 'please choose a different password' }, 409);
+
+  await env.LOGINS.put('login:' + newHash, JSON.stringify(record)); // same identity, new key
+  await env.LOGINS.delete('login:' + oldHash);
+  return json({ ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -395,6 +439,7 @@ export default {
       else if (url.pathname === '/api/my-bookings' && request.method === 'GET') resp = await handleMyBookings(request, env);
       else if (url.pathname === '/api/bookings/seen' && request.method === 'POST') resp = await handleSeenBookings(request, env);
       else if (url.pathname === '/api/bookings/cancel' && request.method === 'POST') resp = await handleCancelBooking(request, env);
+      else if (url.pathname === '/api/change-password' && request.method === 'POST') resp = await handleChangePassword(request, env);
       else resp = json({ ok: false, error: 'not found' }, 404);
     } catch (err) {
       resp = json({ ok: false, error: 'server error' }, 500);

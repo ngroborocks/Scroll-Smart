@@ -31,9 +31,9 @@ signs login sessions — it should never be committed to the repo, and isn't.
 ```
 wrangler kv bulk put seed-logins.json --binding=LOGINS
 ```
-Temporary passwords (change these once it's live — see step 7):
-- **Neil:** `(shared privately)`
-- **Aiden:** `(shared privately)`
+The two temporary passwords for Neil and Aiden are shared privately and are
+deliberately kept out of this public repo — see your own notes / the message
+from Claude. Change them from the app once you're live (step 7).
 
 ## 5. Deploy
 ```
@@ -54,11 +54,10 @@ into the `Scroll-Smart` repo (same location as before) and push.
 Visit `scroll-smart.com/scheduling/`, log in with Neil's temp password, add
 your real classes on the left, hit **Save changes**. Log out, log in with
 Aiden's temp password, confirm his side works and Neil's shows up read-only
-on the right. Once you're both happy, pick real passwords:
-- generate a new one the same way as before (or just make one up),
-- tell Claude the new password, and it'll compute the hash and give you a
-  one-line `wrangler kv key put` command to swap it in — the plaintext
-  password never needs to touch the repo or this chat again after that.
+on the right. Once you're both happy, change each password in place:
+- click **Change password** in the header, enter the current password and a new
+  one (8+ characters). The Worker re-hashes it and swaps the login server-side,
+  so the plaintext never needs to touch the repo or this chat again.
 
 ## 8. Once you send me the school spreadsheet
 ```

@@ -199,6 +199,13 @@ footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; padding-top:
 .book-status.err{ color:var(--coral); }
 .witem.booked{ opacity:.72; }
 
+/* change password */
+.changepw{ padding:22px; }
+.changepw h2{ font-size:1.05rem; margin-bottom:14px; }
+.changepw-form{ display:flex; flex-wrap:wrap; gap:14px 20px; align-items:flex-end; }
+.changepw-form .field{ min-width:180px; }
+.changepw-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+
 /* role-based visibility */
 body[data-role="school"] #controls,
 body[data-role="school"] #editors{ display:none; }
@@ -241,12 +248,27 @@ body[data-role="school"] #editors{ display:none; }
       </div>
       <div class="session">
         <span class="whoami" id="whoami"></span>
+        <button class="btn btn-ghost" id="changePwBtn" type="button">Change password</button>
         <button class="btn btn-ghost" id="logoutBtn" type="button">Log out</button>
       </div>
     </div>
     <p class="sub" id="heroSub"></p>
     <p class="app-error" id="appError" hidden></p>
   </header>
+
+  <section class="glass changepw" id="changePwSection" hidden>
+    <h2>Change your password</h2>
+    <form class="changepw-form" id="changePwForm" autocomplete="off">
+      <label class="field"><span class="lbl">Current password</span><input type="password" id="curPw" autocomplete="current-password" required></label>
+      <label class="field"><span class="lbl">New password</span><input type="password" id="newPw" autocomplete="new-password" minlength="8" required></label>
+      <label class="field"><span class="lbl">Confirm new password</span><input type="password" id="newPw2" autocomplete="new-password" minlength="8" required></label>
+      <div class="changepw-actions">
+        <button class="btn btn-primary" type="submit" id="changePwSubmit">Update password</button>
+        <button class="btn btn-ghost" type="button" id="changePwCancel">Cancel</button>
+        <span class="save-status" id="changePwStatus"></span>
+      </div>
+    </form>
+  </section>
 
   <section class="glass bookings" id="bookingsSection" hidden>
     <div class="bookings-head">
@@ -878,11 +900,50 @@ body[data-role="school"] #editors{ display:none; }
     document.body.removeAttribute('data-role');
     document.getElementById('bookingsSection').hidden = true;
     document.getElementById('myBookingsSection').hidden = true;
+    document.getElementById('changePwSection').hidden = true;
+    clearChangePw();
     document.title = "Schedule Sync — unlisted";
     showLogin();
   }
 
   document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+  // ---------- change password ----------
+  function clearChangePw(keepStatus){
+    document.getElementById('curPw').value = '';
+    document.getElementById('newPw').value = '';
+    document.getElementById('newPw2').value = '';
+    if(!keepStatus){ var s = document.getElementById('changePwStatus'); s.textContent = ''; s.className = 'save-status'; }
+  }
+  document.getElementById('changePwBtn').addEventListener('click', function(){
+    var sec = document.getElementById('changePwSection');
+    var willShow = sec.hidden;
+    sec.hidden = !willShow;
+    if(willShow){ clearChangePw(); document.getElementById('curPw').focus(); }
+  });
+  document.getElementById('changePwCancel').addEventListener('click', function(){
+    document.getElementById('changePwSection').hidden = true; clearChangePw();
+  });
+  document.getElementById('changePwForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var cur = document.getElementById('curPw').value;
+    var np = document.getElementById('newPw').value;
+    var np2 = document.getElementById('newPw2').value;
+    var status = document.getElementById('changePwStatus');
+    var submit = document.getElementById('changePwSubmit');
+    if(np.length < 8){ status.className = 'save-status err'; status.textContent = 'New password must be at least 8 characters.'; return; }
+    if(np !== np2){ status.className = 'save-status err'; status.textContent = 'New passwords do not match.'; return; }
+    submit.disabled = true; status.className = 'save-status'; status.textContent = 'Updating…';
+    api('/api/change-password', { method:'POST', body:{ currentPassword:cur, newPassword:np } }).then(function(res){
+      submit.disabled = false;
+      if(res.status===200 && res.body.ok){
+        clearChangePw(true);
+        status.className = 'save-status ok'; status.textContent = 'Password updated. Use it the next time you sign in.';
+      } else {
+        status.className = 'save-status err'; status.textContent = (res.body && res.body.error) || 'Could not update password.';
+      }
+    });
+  });
 
   document.getElementById('loginForm').addEventListener('submit', function(e){
     e.preventDefault();
