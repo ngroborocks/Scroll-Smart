@@ -9,11 +9,11 @@ compatibility_date = "2026-07-01"
 
 [[kv_namespaces]]
 binding = "LOGINS"
-id = "REPLACE_WITH_LOGINS_NAMESPACE_ID"
+id = "b033630a1f104ce59a2fcdcd98919790"
 
 [[kv_namespaces]]
 binding = "SCHEDULE"
-id = "REPLACE_WITH_SCHEDULE_NAMESPACE_ID"
+id = "e66be3734f2d4a7e96a3bb1d21599dff"
 
 [vars]
 ALLOWED_ORIGIN = "https://scroll-smart.com"

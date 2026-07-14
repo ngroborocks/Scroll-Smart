@@ -344,7 +344,7 @@ body[data-role="school"] #editors{ display:none; }
   // ---------- API base: local worker in dev, deployed worker in prod ----------
   var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:8787'
-    : 'https://scroll-smart-api.YOUR-SUBDOMAIN.workers.dev'; // real one goes here after deploying, see DEPLOY.md
+    : 'https://scroll-smart-api.neilgupta999.workers.dev'; // deployed worker (see worker/DEPLOY.md)
 
   var TOKEN_KEY = 'ss_sched_token';
   var token = null;
