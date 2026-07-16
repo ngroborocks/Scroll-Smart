@@ -233,6 +233,15 @@ async function handleMe(request, env) {
   return json({ ok: true, role: identity.role, name: identity.name, schoolId: identity.schoolId });
 }
 
+// Schools in this set may only book virtual presentations. Stored as ONE
+// SCHEDULE key ("virtual-only" -> JSON array of schoolIds) so updating the
+// whole list costs a single KV write instead of one per school login record.
+async function getVirtualOnlySet(env) {
+  const raw = await env.SCHEDULE.get('virtual-only');
+  if (!raw) return new Set();
+  try { return new Set(JSON.parse(raw)); } catch (e) { return new Set(); }
+}
+
 async function handleAvailability(request, env) {
   const identity = await requireAuth(request, env, null);
   if (!identity) return json({ ok: false, error: 'unauthorized' }, 401);
@@ -268,7 +277,9 @@ async function handleAvailability(request, env) {
   if (ovRaw) { try { overrides = JSON.parse(ovRaw); } catch (e) { /* treat as none */ } }
 
   const windows = computeDateWindows(neilEvents, aidenEvents, overrides, buffer, from, weeks * 7);
-  return json({ ok: true, buffer, from, weeks, windows });
+  const virtualOnly = identity.role === 'school' && identity.schoolId
+    ? (await getVirtualOnlySet(env)).has(identity.schoolId) : false;
+  return json({ ok: true, buffer, from, weeks, windows, virtualOnly });
 }
 
 // ---------- date overrides (admin): free/blocked calendar ranges ----------
@@ -399,6 +410,12 @@ async function handleBook(request, env, ctx) {
   if (s === null || e === null || e <= s) return json({ ok: false, error: 'end must be after start' }, 400);
   const format = body.format === 'virtual' ? 'virtual' : (body.format === 'in-person' ? 'in-person' : null);
   if (!format) return json({ ok: false, error: 'format must be in-person or virtual' }, 400);
+  // Virtual-only schools can't request in-person visits — enforced here, not just
+  // hidden in the UI, so a hand-crafted request can't get around it.
+  if (format === 'in-person' && identity.role === 'school' && identity.schoolId &&
+      (await getVirtualOnlySet(env)).has(identity.schoolId)) {
+    return json({ ok: false, error: 'your school is set up for virtual presentations only' }, 403);
+  }
   const audience = parseInt(body.audienceSize, 10);
   if (isNaN(audience) || audience < 1 || audience > 5000) return json({ ok: false, error: 'audience size must be a number between 1 and 5000' }, 400);
 

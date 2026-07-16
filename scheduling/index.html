@@ -239,6 +239,7 @@ footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; padding-top:
 .fmt-toggle button{ font-family:var(--font-head); font-weight:700; font-size:.84rem; padding:8px 16px;
   background:transparent; border:none; color:var(--ink-soft); cursor:pointer; }
 .fmt-toggle button.active{ background:var(--grad-accent); color:#062018; }
+.fmt-toggle button:disabled{ opacity:.38; cursor:not-allowed; }
 .fmt-note{ font-size:.8rem; color:var(--ink-soft); }
 
 /* change password */
@@ -1089,6 +1090,16 @@ body[data-role="school"] #editors{ display:none; }
       // deployed worker caps weeks lower than we asked, later weeks would render
       // as (falsely) empty rather than unavailable.
       if(res.body.weeks && res.body.weeks < WEEKS_AHEAD) WEEKS_AHEAD = res.body.weeks;
+      // Virtual-only schools: lock the format toggle to virtual. The server
+      // enforces this on booking too — this just keeps the UI honest.
+      if(res.body.virtualOnly){
+        setFormat('virtual');
+        var ipBtn = document.getElementById('fmtInPerson');
+        ipBtn.disabled = true;
+        ipBtn.title = "Your school is set up for virtual presentations";
+        document.getElementById('fmtNote').textContent =
+          "Your school is set up for virtual presentations — no travel needed, full windows available.";
+      }
       document.getElementById('heroSub').textContent =
         "Browse the coming weeks, choose in-person or virtual, and request a window that works for your school. " +
         "In-person visits account for a " + schoolData.buffer + "-minute round-trip travel buffer.";
