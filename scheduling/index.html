@@ -90,6 +90,13 @@ input[type=number]{ width:80px; }
 input[type=time]{ width:auto; }
 input:disabled, select:disabled{ opacity:.62; cursor:default; }
 input::placeholder{ color:rgba(238,242,255,.35); }
+/* show / hide password toggle */
+.pw-wrap{ position:relative; display:flex; }
+.pw-wrap input{ flex:1; padding-right:60px; }
+.pw-reveal{ position:absolute; right:5px; top:50%; transform:translateY(-50%);
+  background:none; border:0; color:var(--ink-soft); font-size:.72rem; font-weight:600;
+  text-transform:uppercase; letter-spacing:.06em; cursor:pointer; padding:5px 9px; border-radius:var(--radius-sm); }
+.pw-reveal:hover{ color:var(--ink); }
 .buffer-wrap{ display:flex; align-items:center; gap:8px; }
 .buffer-wrap span.suffix{ font-size:.85rem; color:var(--ink-soft); }
 
@@ -265,7 +272,10 @@ body[data-role="school"] #editors{ display:none; }
     <p class="sub">Enter your passphrase to continue. This tool is private and unlisted.</p>
     <label class="field">
       <span class="lbl">Passphrase</span>
-      <input type="password" id="pw" name="password" autocomplete="current-password" required>
+      <div class="pw-wrap">
+        <input type="password" id="pw" name="password" autocomplete="current-password" required>
+        <button type="button" class="pw-reveal" id="pwReveal" aria-label="Show password" aria-pressed="false">Show</button>
+      </div>
     </label>
     <button class="btn btn-primary" type="submit" id="loginBtn">Sign in</button>
     <p class="login-err" id="loginErr" role="alert" hidden></p>
@@ -848,14 +858,27 @@ body[data-role="school"] #editors{ display:none; }
       var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
       var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
       cancel.title = "Remove this request"; cancel.setAttribute('aria-label','Remove this request');
-      cancel.addEventListener('click', function(){ cancelBooking(b.id); });
+      cancel.addEventListener('click', function(){ doCancel(b.id, cancel, loadBookings); });
       item.appendChild(when); item.appendChild(who); item.appendChild(meta); item.appendChild(ago); item.appendChild(cancel);
       if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
       list.appendChild(item);
     });
   }
   function ackBookings(){ api('/api/bookings/seen', { method:'POST' }).then(loadBookings); }
-  function cancelBooking(id){ api('/api/bookings/cancel', { method:'POST', body:{ id:id } }).then(loadBookings); }
+  // Cancel a booking with a confirmation step, a loading state, and visible error
+  // feedback — so a stray click on the ✕ can't silently wipe a real request, and a
+  // failed cancel no longer looks like it worked. Shared by the admin list and the
+  // school's "Your requests" list; `reload` re-fetches whichever list to reflect it.
+  function doCancel(id, btn, reload){
+    if(!window.confirm('Cancel this request? It will be removed and cannot be undone.')) return;
+    var label = btn.textContent;
+    btn.disabled = true; btn.textContent = '…'; btn.title = 'Cancelling…';
+    api('/api/bookings/cancel', { method:'POST', body:{ id:id } }).then(function(res){
+      if(res.status===200 && res.body && res.body.ok){ reload(); return; }
+      btn.disabled = false; btn.textContent = label; btn.title = 'Cancel this request';
+      window.alert((res.body && res.body.error) ? ('Could not cancel: ' + res.body.error) : 'Could not cancel. Please try again.');
+    });
+  }
 
   // ---------- calendar periods panel (admin) ----------
   function renderOverrides(){
@@ -918,7 +941,7 @@ body[data-role="school"] #editors{ display:none; }
       var ago = document.createElement('span'); ago.className="bago"; ago.textContent = fmtAgo(b.createdAt);
       var cancel = document.createElement('button'); cancel.type="button"; cancel.className="del bcancel"; cancel.textContent="✕";
       cancel.title = "Cancel this request"; cancel.setAttribute('aria-label','Cancel this request');
-      cancel.addEventListener('click', function(){ api('/api/bookings/cancel', { method:'POST', body:{ id:b.id } }).then(loadMyBookings); });
+      cancel.addEventListener('click', function(){ doCancel(b.id, cancel, loadMyBookings); });
       item.appendChild(when); item.appendChild(status); item.appendChild(meta); item.appendChild(ago); item.appendChild(cancel);
       if(b.note){ var n = document.createElement('span'); n.className="bnote"; n.textContent = "“" + b.note + "”"; item.appendChild(n); }
       list.appendChild(item);
@@ -1168,6 +1191,20 @@ body[data-role="school"] #editors{ display:none; }
       }
     });
   });
+
+  // show / hide the passphrase while typing
+  (function(){
+    var btn = document.getElementById('pwReveal'), inp = document.getElementById('pw');
+    if(!btn || !inp) return;
+    btn.addEventListener('click', function(){
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      inp.focus();
+    });
+  })();
 
   document.getElementById('loginForm').addEventListener('submit', function(e){
     e.preventDefault();
