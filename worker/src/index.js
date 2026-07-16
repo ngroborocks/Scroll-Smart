@@ -212,7 +212,7 @@ async function handleLogin(request, env) {
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   const rlKey = 'rl:' + ip;
   const attempts = parseInt((await env.LOGINS.get(rlKey)) || '0', 10);
-  if (attempts >= 8) return json({ ok: false, error: 'too many attempts, try again later' }, 429);
+  if (attempts >= 100) return json({ ok: false, error: 'too many attempts, try again later' }, 429);
   await env.LOGINS.put(rlKey, String(attempts + 1), { expirationTtl: 600 });
 
   const hash = await sha256Hex(body.password);
@@ -256,12 +256,12 @@ async function handleAvailability(request, env) {
     if (!isNaN(bp) && bp >= 0) buffer = bp;
   }
 
-  // Real calendar horizon: from (default today, America/Chicago), weeks (default 10, max 12)
+  // Real calendar horizon: from (default today, America/Chicago), weeks (default 10, max 26)
   let from = url.searchParams.get('from');
   if (!isDateStr(from)) from = chicagoToday();
   let weeks = parseInt(url.searchParams.get('weeks') || '10', 10);
   if (isNaN(weeks) || weeks < 1) weeks = 10;
-  if (weeks > 12) weeks = 12;
+  if (weeks > 26) weeks = 26;
 
   const ovRaw = await env.SCHEDULE.get('overrides');
   let overrides = [];

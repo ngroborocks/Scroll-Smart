@@ -507,7 +507,7 @@ body[data-role="school"] #editors{ display:none; }
   }
 
   // week navigation state (shared by both roles)
-  var WEEKS_AHEAD = 10;                       // how far schools can browse/book
+  var WEEKS_AHEAD = 26;                       // how far schools can browse/book (~6 months, reaches December)
   var weekStart = mondayOf(todayStr());       // Monday of the currently shown week
   var overrides = [];                         // admin: date-range overrides
   var schoolData = null;                      // school: {buffer, windows:[...]} from the server
@@ -1085,6 +1085,10 @@ body[data-role="school"] #editors{ display:none; }
         showError(res.body.error || "Could not load availability."); return;
       }
       schoolData = { buffer: res.body.buffer, windows: res.body.windows || [] };
+      // Never let the nav browse past what the server actually computed — if the
+      // deployed worker caps weeks lower than we asked, later weeks would render
+      // as (falsely) empty rather than unavailable.
+      if(res.body.weeks && res.body.weeks < WEEKS_AHEAD) WEEKS_AHEAD = res.body.weeks;
       document.getElementById('heroSub').textContent =
         "Browse the coming weeks, choose in-person or virtual, and request a window that works for your school. " +
         "In-person visits account for a " + schoolData.buffer + "-minute round-trip travel buffer.";
