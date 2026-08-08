@@ -10,11 +10,17 @@
 }
 *{box-sizing:border-box}
 html,body{overflow-x:clip}
+/* Stop iOS Safari inflating body copy when a phone is rotated to landscape. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Figtree,system-ui,sans-serif;font-size:17px;line-height:1.6}
 a{color:var(--acc-700)} a:hover{color:var(--acc-600)}
 h1,h2,.display{font-family:Caprasimo,serif;font-weight:400}
 .hand{font-family:Caveat,cursive;color:var(--acc-700)}
+/* Shared gutter. Narrows on phones — 32px each side eats 18% of a 360px
+   screen. Applies to book/ and scheduling/ as well as the landing page. */
 .wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+@media (max-width:640px){.wrap{padding:0 20px}}
+@media (max-width:380px){.wrap{padding:0 16px}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;cursor:pointer;padding:13px 26px;border-radius:999px;background:var(--acc);color:#fff9f0;font-weight:700;font-size:16px;font-family:Figtree,sans-serif;text-decoration:none}
 .btn:hover{background:var(--acc-600)} .btn:active{background:var(--acc-800)}
 .btn-2{background:var(--sage)} .btn-2:hover{background:var(--sage-600)}

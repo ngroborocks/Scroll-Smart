@@ -65,7 +65,14 @@ html{scroll-behavior:smooth}
 .nav .wrap{display:flex;align-items:center;gap:28px;padding-top:16px;padding-bottom:16px}
 .nav nav{display:flex;gap:24px;font-size:15px;font-weight:500;margin-left:auto}
 .nav nav a{text-decoration:none;color:var(--n-700)} .nav nav a:hover{color:var(--acc-700)}
-.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:56px;align-items:center;padding:64px 0 80px}
+/* Fluid type: headings scale with the viewport instead of sitting at a fixed
+   38px, which was ~11% of a 360px screen and wrapped after two words. */
+h2{font-size:clamp(26px,6.4vw,38px);line-height:1.14}
+.lead{font-size:clamp(16px,4.1vw,18px)}
+/* padding-top/bottom LONGHAND, never the `padding` shorthand: this block loads
+   after site.css, so a shorthand here would reset .wrap's horizontal padding
+   to 0 and leave the section flush against the screen edge. */
+.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:56px;align-items:center;padding-top:64px;padding-bottom:80px}
 .mark{position:relative;white-space:nowrap}
 .mark i{position:absolute;inset:58% -2% -6%;background:var(--acc-300);z-index:0;border-radius:4px;transform:rotate(-.6deg);font-style:normal}
 .mark span{position:relative}
@@ -73,6 +80,8 @@ html{scroll-behavior:smooth}
 .founders img{width:132px;height:132px;object-fit:cover;border-radius:50%;border:5px solid var(--paper);box-shadow:var(--shadow-md);filter:saturate(.85) contrast(.95) brightness(1.04)}
 .band-warm{background:var(--acc-100)} .band-sage{background:var(--sage-100)}
 .cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .mini{background:var(--paper);border-radius:22px;padding:26px 24px;box-shadow:none}
 .mini .num{display:inline-flex;width:44px;height:44px;border-radius:50%;align-items:center;justify-content:center;font-family:Caprasimo,serif;font-size:19px;margin-bottom:14px}
 .skills li{display:flex;gap:18px;padding:16px 0;border-bottom:1px solid var(--acc-200)}
@@ -103,8 +112,69 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 .quote-mark{font-family:Caprasimo,serif;font-size:40px;line-height:1;color:var(--acc-300)}
 .quote-name{display:block;font-weight:700;font-size:15px;margin-top:14px}
 .quote-role{display:block;font-size:14px;color:var(--n-600)}
-@media (max-width:860px){.hero,.two{grid-template-columns:1fr!important}.cards4,.aud{grid-template-columns:1fr 1fr}.nav nav{display:none}}
-@media (max-width:560px){.aud{grid-template-columns:1fr}.who{flex-direction:column}}
+/* ============ RESPONSIVE ============
+   The `!important` on the grid rules is load-bearing: several sections carry
+   an inline grid-template-columns, and an inline style beats a media query.
+   Without it the "Why peer-to-peer works" row stayed 4-up on a phone and two
+   cards rendered off-screen (hidden by overflow-x:clip, so silently unreadable). */
+
+/* --- tablet --- */
+@media (max-width:1000px){
+  .cards4{grid-template-columns:repeat(2,1fr)!important}
+  .aud{grid-template-columns:repeat(3,1fr)}
+}
+
+/* --- stack the two-column layouts --- */
+@media (max-width:860px){
+  .hero,.two{grid-template-columns:1fr!important;gap:36px!important}
+  .cards3{grid-template-columns:repeat(2,1fr)!important}
+  .hero{padding-top:40px;padding-bottom:52px}
+  /* Nav links became display:none here, leaving phones with no navigation at
+     all. Reflow them onto a scrollable second row instead — no JS required. */
+  .nav .wrap{flex-wrap:wrap;gap:10px 16px;padding-top:12px;padding-bottom:10px}
+  .nav nav{order:3;flex-basis:100%;margin-left:0;gap:20px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .nav nav::-webkit-scrollbar{display:none}
+  .nav nav a{white-space:nowrap;padding:8px 0}
+  .nav .btn{margin-left:auto}
+  /* The founders' portraits sat 132px + 132px + gap = wider than a 360px
+     screen once padding was subtracted; the staggered offset made it worse. */
+  .founders img{width:112px;height:112px}
+  .founders>div{margin-top:0!important}
+  .founders>div>div:last-child{margin-top:22px!important}
+}
+
+/* --- phones --- */
+@media (max-width:640px){
+  /* .wrap's narrower phone gutter lives in site.css, shared with book/. */
+  .cards4,.cards3,.aud,.formgrid{grid-template-columns:1fr!important}
+  .two{gap:20px!important}
+  /* "not to get played" is a nowrap highlight ~333px wide at the desktop size
+     — wider than the content box on a phone. Let it break across lines and
+     carry the marker pen with it. */
+  .mark{white-space:normal}
+  .mark i{display:none}
+  .mark span{background:var(--acc-300);border-radius:4px;box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:1px 5px}
+  /* the inline line-height:1.08 makes the wrapped highlight bands collide */
+  h1{line-height:1.2!important}
+  .who{flex-direction:column;gap:16px;padding:24px}
+  .involve{flex-direction:column;gap:14px;padding:22px}
+  .mini{padding:22px 20px}
+  .skills li{gap:12px}
+  .hand{font-size:19px!important}
+  /* Comfortable thumb targets: the email/phone links rendered only 24px tall,
+     well under the ~44px guideline for touch. */
+  .contact-line{min-height:40px;padding:4px 0}
+  .who-links{gap:4px}
+  details summary{padding:4px 0}
+  /* !important is required throughout: the footer's flex rules are inline. */
+  footer .wrap{flex-direction:column;align-items:flex-start!important;gap:10px!important}
+  footer .wrap span:nth-child(3){margin-left:0!important}
+}
+
+/* --- very narrow (iPhone SE / older Android) --- */
+@media (max-width:380px){
+  .founders img{width:96px;height:96px}
+}
 </style>
 </head>
 <body>
@@ -117,8 +187,8 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 <section class="hero wrap" id="top">
   <div>
     <p class="kicker" style="margin:0 0 18px">Free talks for middle &amp; high schools</p>
-    <h1 style="margin:0 0 22px;font-size:clamp(38px,5vw,58px);line-height:1.08">We teach students how <span class="mark"><i></i><span>not to get played</span></span> by the internet.</h1>
-    <p style="margin:0 0 30px;max-width:52ch;font-size:18px;color:#4a4238">Spotting fake posts, locking down accounts, taming the algorithm — a 45-minute session taught by two high schoolers who actually live on these apps. No lectures, no "kids these days."</p>
+    <h1 style="margin:0 0 22px;font-size:clamp(31px,7.6vw,58px);line-height:1.08">We teach students how <span class="mark"><i></i><span>not to get played</span></span> by the internet.</h1>
+    <p class="lead" style="margin:0 0 30px;max-width:52ch;color:#4a4238">Spotting fake posts, locking down accounts, taming the algorithm — a 45-minute session taught by two high schoolers who actually live on these apps. No lectures, no "kids these days."</p>
     <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <a class="btn" style="padding:15px 30px;font-size:17px" data-goatcounter-click="cta-request-hero" href="#book">Book a visit — it's free</a>
       <a class="btn btn-ghost" data-goatcounter-click="cta-explore-talk" href="#talk">What we cover</a>
@@ -135,7 +205,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 </section>
 
 <section class="band-warm" id="mission"><div class="wrap" style="padding-top:64px;padding-bottom:72px">
-  <h2 style="margin:0 0 10px;font-size:38px">The internet isn't going anywhere. Neither are we.</h2>
+  <h2 style="margin:0 0 10px">The internet isn't going anywhere. Neither are we.</h2>
   <p style="margin:0 0 36px;max-width:60ch;color:#4a4238">Students spend hours a day online — telling them to simply use it less misses the point. Our mission is to make every one of those hours safer and sharper: browsing securely, protecting personal privacy, recognizing online dangers before they escalate, managing feeds intentionally, and questioning what shows up on the screen instead of absorbing it — with practical moves they can make on their own phones the same afternoon.</p>
   <div class="cards4">
     <div class="mini"><span class="num" style="background:var(--acc-200);color:var(--acc-700)">1</span><h3 style="margin:0 0 8px;font-size:18px">Privacy that sticks</h3><p style="margin:0;font-size:15px;color:var(--n-700)">Which settings matter, who really sees your posts, and a 5-minute account lockdown.</p></div>
@@ -148,7 +218,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 <section class="wrap two" id="talk" style="display:grid;grid-template-columns:1fr 1.3fr;gap:56px;align-items:start;padding-top:72px;padding-bottom:72px">
   <div>
     <p class="kicker" style="margin:0 0 12px">The presentation</p>
-    <h2 style="margin:0 0 16px;font-size:38px">One session. Seven skills.</h2>
+    <h2 style="margin:0 0 16px">One session. Seven skills.</h2>
     <p style="margin:0 0 20px;color:#4a4238">45 minutes, fitted to your bell schedule, in person across DFW or virtual anywhere. Discussion-driven, with live examples from the platforms your students are on right now.</p>
     <p class="hand" style="margin:0 0 24px;font-size:22px;transform:rotate(-1deg)">we never say "delete your apps" — promise</p>
     <a class="btn btn-ghost" data-goatcounter-click="cta-one-pager" href="mailto:contactus@scroll-smart.com?subject=Scroll%20Smart%20one-pager%20request&body=Hi%20Aiden%20and%20Neil%2C%0A%0ACould%20you%20send%20over%20the%20one-page%20summary%20for%20principals%3F%0A%0AThanks!">Request the principal's one-pager</a>
@@ -165,8 +235,8 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 </section>
 
 <section class="band-sage" id="why"><div class="wrap" style="padding-top:64px;padding-bottom:72px">
-  <div style="max-width:60ch;margin-bottom:24px"><h2 style="margin:0 0 8px;font-size:38px">Why peer-to-peer works</h2><p style="margin:0;color:#4a4238">Every school has heard an adult explain the internet to teenagers. This is what happens when the message comes from the row behind them.</p></div>
-  <div class="cards4" style="grid-template-columns:repeat(4,1fr)">
+  <div style="max-width:60ch;margin-bottom:24px"><h2 style="margin:0 0 8px">Why peer-to-peer works</h2><p style="margin:0;color:#4a4238">Every school has heard an adult explain the internet to teenagers. This is what happens when the message comes from the row behind them.</p></div>
+  <div class="cards4">
     <div class="mini"><h3 style="margin:0 0 8px;font-size:18px">Students listen to students</h3><p style="margin:0;font-size:15px;color:var(--n-700)">We use the same apps, saw the same viral posts, and speak the same language — so it lands as advice, not a lecture.</p></div>
     <div class="mini"><h3 style="margin:0 0 8px;font-size:18px">Zero cost, zero catch</h3><p style="margin:0;font-size:15px;color:var(--n-700)">No invoice, no product, no data collection. We're students on a mission, not a vendor in a sales cycle.</p></div>
     <div class="mini"><h3 style="margin:0 0 8px;font-size:18px">Practical, not preachy</h3><p style="margin:0;font-size:15px;color:var(--n-700)">Audit a privacy setting, reverse-image-search a viral post, reshape a feed — concrete moves, not warnings.</p></div>
@@ -181,8 +251,8 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
      ========================================================== -->
 <section class="wrap is-hidden" id="testimonials" style="padding-top:72px;padding-bottom:72px">
   <p class="kicker" style="margin:0 0 12px">Trusted by educators</p>
-  <h2 style="margin:0 0 32px;font-size:38px">What schools are saying.</h2>
-  <div class="cards4" style="grid-template-columns:repeat(3,1fr)">
+  <h2 style="margin:0 0 32px">What schools are saying.</h2>
+  <div class="cards3">
     <!-- [EDIT: TESTIMONIAL] Quote 1 -->
     <figure class="mini quote-card" style="margin:0">
       <div class="quote-mark" aria-hidden="true">&ldquo;</div>
@@ -205,7 +275,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 </section>
 
 <section class="wrap" id="about" style="padding-top:72px;padding-bottom:72px">
-  <h2 style="margin:0 0 36px;font-size:38px">The two of us</h2>
+  <h2 style="margin:0 0 36px">The two of us</h2>
   <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
     <div class="mini who">
       <img src="assets/aiden.jpg" alt="Aiden Attarha">
@@ -246,7 +316,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 
 <section class="band-warm" id="book"><div class="wrap two" style="display:grid;grid-template-columns:1fr 1.1fr;gap:52px;align-items:start;padding-top:64px;padding-bottom:72px">
   <div>
-    <h2 style="margin:0 0 14px;font-size:38px">Booking takes two minutes.</h2>
+    <h2 style="margin:0 0 14px">Booking takes two minutes.</h2>
     <p style="margin:0 0 22px;color:#4a4238">Tell us your school and a rough date — we'll reply within two school days with times that work around our own class schedules.</p>
     <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:16px">
       <li style="display:flex;gap:10px"><span style="color:var(--sage-700);font-weight:700">✓</span>45 min, flexible to your bell schedule</li>
@@ -257,7 +327,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
     <p style="margin:18px 0 0;font-size:14.5px;color:var(--n-600)">Already have a school login? <a data-goatcounter-click="link-book-portal" href="book/">Pick a time on our live calendar →</a></p>
   </div>
   <form class="card" id="bookForm" style="padding:30px 32px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="formgrid">
       <label>Your name<input class="input" name="name" placeholder="Ms. Rivera" required></label>
       <label>Role<input class="input" name="role" placeholder="Counselor"></label>
       <label style="grid-column:1/-1">School<input class="input" name="school" placeholder="e.g. Coppell Middle School East" required></label>
@@ -272,7 +342,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 <!-- ============ CONTACT (parents / teachers / students) ============ -->
 <section class="wrap" id="contact" style="padding-top:72px;padding-bottom:72px">
   <p class="kicker" style="margin:0 0 12px">Contact</p>
-  <h2 style="margin:0 0 12px;font-size:38px">Get in touch in fifteen seconds.</h2>
+  <h2 style="margin:0 0 12px">Get in touch in fifteen seconds.</h2>
   <p style="margin:0 0 32px;max-width:60ch;color:#4a4238">Tell us who you are and we'll start the email for you — subject line and details already filled in. Booking a presentation for a school? Use the form above instead.</p>
   <div class="aud">
     <a class="mini" data-goatcounter-click="contact-parent" href="mailto:contactus@scroll-smart.com?subject=Parent%20Inquiry%20%E2%80%94%20Scroll%20Smart&body=Hi%20Scroll%20Smart%20team%2C%0A%0AName%3A%20%5BYour%20name%5D%0AStudent%27s%20school%20(optional)%3A%20%5BSchool%20name%5D%0A%0AI%27m%20interested%20in%20the%20parent%20guide%20%2F%20my%20question%20is%3A%20%0A%0AThanks%2C%0A%5BYour%20name%5D">
@@ -304,7 +374,7 @@ form label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weig
 </section>
 
 <section class="wrap" id="faq" style="padding-top:0;padding-bottom:72px">
-  <h2 style="margin:0 0 32px;font-size:38px">Questions principals ask us</h2>
+  <h2 style="margin:0 0 32px">Questions principals ask us</h2>
   <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:14px 40px;max-width:1000px">
     <details><summary>Is it really free?</summary><p>Yes. No invoice, no sponsorship pitch, no data collection. We're students doing this because we think it matters.</p></details>
     <details><summary>What grades is it for?</summary><p>Middle and high school. We adjust the examples and pacing — 6th graders and juniors get different versions of the same talk.</p></details>
