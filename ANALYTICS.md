@@ -16,6 +16,9 @@ update the matching origins in the Content-Security-Policy `<meta>` tag at the
 top of `index.html` — GoatCounter's site code appears there twice (`img-src`
 and `connect-src`).
 
+Analytics are on the **public landing page only**. `book/` and `scheduling/`
+are logged-in tools (`book/` is also `noindex`) and carry no trackers.
+
 ## GoatCounter event reference
 
 Events show up in the GoatCounter dashboard as paths (filter by name).
@@ -24,24 +27,31 @@ Events show up in the GoatCounter dashboard as paths (filter by name).
 
 | Event | Fires when someone clicks… |
 |-------|----------------------------|
-| `cta-request-nav` | "Book Us" in the floating nav |
-| `cta-request-hero` | "Request a Presentation" in the hero |
-| `cta-request-mid` | "Request a Presentation" in the banner after the Presentation section |
-| `cta-request-contact` | "Request a Presentation" in the final banner at the bottom of Contact |
-| `cta-explore-mission` | "Explore our mission" (secondary hero button) |
+| `cta-request-nav` | "Book a visit" in the sticky nav (jumps to the booking form) |
+| `cta-request-hero` | "Book a visit — it's free" in the hero (jumps to the booking form) |
+| `cta-request-form` | **Send request** — submits the booking form and opens the pre-filled email |
+| `cta-explore-talk` | "What we cover" (secondary hero button) |
+| `cta-one-pager` | "Request the principal's one-pager" in The Talk |
 | `cta-get-involved` | "Reach out" in the Get Involved card |
 | `contact-parent` | the "I'm a Parent" contact card |
 | `contact-teacher` | the "I'm a Teacher" contact card |
 | `contact-student` | the "I'm a Student" contact card |
-| `email-aiden` / `email-neil` | a founder's email link in Contact |
-| `phone-aiden` / `phone-neil` | a founder's phone number in Contact |
+| `email-aiden` / `email-neil` | a founder's email link in About |
+| `phone-aiden` / `phone-neil` | a founder's phone number in About |
+| `email-book` | the handwritten "or just email us" address in the booking section |
+| `link-book-portal` | "Pick a time on our live calendar" → the `book/` scheduling portal |
 | `email-footer` | contactus@scroll-smart.com in the footer |
 
-All CTAs are `mailto:` links, so a `cta-request-*` click means "opened a
-pre-filled presentation-request email" — the closest measurable step to the
-site's real conversion, which is that email actually arriving.
+**Reading the conversion step.** `cta-request-nav` and `cta-request-hero` are
+now *in-page jumps* to the booking form, not emails — they measure intent, not
+conversion. The real conversion is **`cta-request-form`**, which fires when the
+form is submitted and the pre-filled email actually opens. The
+`cta-request-hero → cta-request-form` gap is the form's abandonment rate.
 
-### Engagement event (fired from `script.js`, section 8)
+The `contact-*` cards and `email-*` / `phone-*` links are still direct
+`mailto:` / `tel:` links, so a click there means the email or dialer opened.
+
+### Engagement event (fired from `site.js`, section 4)
 
 | Event | Fires when… |
 |-------|-------------|
@@ -53,13 +63,13 @@ actually stayed or scrolled, so **engaged ÷ pageviews** is the real "did a huma
 read this?" rate. After it fires, its scroll listener and timer are torn down —
 no persistent listeners linger.
 
-### Section-reach events (fired from `script.js`, section 7)
+### Section-reach events (fired from `site.js`, section 3)
 
-`reached-mission`, `reached-presentation`, `reached-why-us`, `reached-about`,
-`reached-contact` — each fires the **first** time that section becomes visible
-in a pageview (at most once per page load). Together they read as a scroll
-funnel: comparing `reached-contact` against `cta-request-*` clicks shows how
-many people who saw the contact section actually started an email.
+`reached-mission`, `reached-talk`, `reached-why`, `reached-about`,
+`reached-book`, `reached-contact` — each fires the **first** time that section
+becomes visible in a pageview (at most once per page load). Together they read
+as a scroll funnel: comparing `reached-book` against `cta-request-form` shows
+how many people who saw the booking form actually sent a request.
 
 Implementation notes: the `engaged` and reach events use scroll/visibility and
 IntersectionObserver respectively, and every GoatCounter call is guarded to
@@ -72,20 +82,20 @@ Read the events top to bottom as one drop-off funnel — each step should be a
 subset of the one above it:
 
 ```
-pageview          all hits (includes bots / prefetch / instant bounces)
-  → engaged       a real human stayed or scrolled (the honest denominator)
+pageview            all hits (includes bots / prefetch / instant bounces)
+  → engaged         a real human stayed or scrolled (the honest denominator)
     → reached-mission
-      → reached-presentation
-        → reached-why-us
+      → reached-talk
+        → reached-why
           → reached-about
-            → reached-contact
-              → cta-request-*   opened a pre-filled presentation email (conversion)
+            → reached-book        saw the booking form
+              → cta-request-form  sent a pre-filled presentation email (conversion)
 ```
 
 The 64-views-but-6-scrolls problem lives in the `pageview → engaged` gap: a
 large drop there means most "views" were never real readers. The
-`reached-contact → cta-request-*` gap is the closing rate — people who read all
-the way down but didn't start an email.
+`reached-book → cta-request-form` gap is the closing rate — people who reached
+the form but didn't send it.
 
 ### Excluding founder devices
 
@@ -104,3 +114,8 @@ origins: `static.cloudflareinsights.com` + `cloudflareinsights.com`
 (Cloudflare) and `gc.zgo.at` + `neil.goatcounter.com` (GoatCounter). Any new
 or replacement analytics provider must be added there too, or the browser will
 silently block it.
+
+`script-src` deliberately has **no `'unsafe-inline'`** — the landing page's
+booking-form logic lives in `site.js` rather than an inline `<script>` block so
+the policy can stay strict. Keep it that way: adding an inline script to
+`index.html` will be blocked by the browser.
